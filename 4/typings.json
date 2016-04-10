@@ -1,5 +1,6 @@
 {
   "name": "node",
+  "homepage": "https://nodejs.org/",
   "version": "4",
   "ambient": true,
   "files": [

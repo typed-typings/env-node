@@ -1,0 +1,8 @@
+{
+  "name": "node",
+  "version": "4",
+  "ambient": true,
+  "files": [
+    "node.d.ts"
+  ]
+}

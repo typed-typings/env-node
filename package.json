@@ -1,0 +1,24 @@
+{
+  "name": "typings-env-node",
+  "version": "1.0.0",
+  "description": "Typescript typings for nodejs",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p 0.8 && tsc -p 0.10 && tsc -p 0.11 && tsc -p 0.12 && tsc -p 4",
+    "test": "tsc -p 0.11/test && tsc -p 0.12/test && tsc -p 4/test",
+    "build+test": "npm run build && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/typed-typings/env-node.git"
+  },
+  "author": "Louay Alakkad <louay@alakkad.me>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/typed-typings/env-node/issues"
+  },
+  "homepage": "https://github.com/typed-typings/env-node#readme",
+  "devDependencies": {
+    "typescript": "^1.8.9"
+  }
+}

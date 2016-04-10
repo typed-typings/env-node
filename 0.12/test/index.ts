@@ -1,4 +1,5 @@
-/// <reference path="node-0.12.d.ts" />
+/// <reference path="../node.d.ts" />
+
 import * as assert from "assert";
 import * as fs from "fs";
 import * as events from "events";

@@ -731,3 +731,20 @@ namespace vm_tests {
         Debug.scripts().forEach(function(script: any) { console.log(script.name); });
     }
 }
+
+////////////////////////////////////////////////////
+/// Error tests
+////////////////////////////////////////////////////
+
+new Error().stack;
+
+class CustomError extends Error {
+  constructor() {
+    super('Message');
+    Error.captureStackTrace(this, CustomError);
+  }
+}
+
+new CustomError().stack;
+
+Error.stackTraceLimit(10);

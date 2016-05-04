@@ -764,6 +764,7 @@ declare module "cluster" {
 declare module "zlib" {
     import * as stream from "stream";
     export interface ZlibOptions { chunkSize?: number; windowBits?: number; level?: number; memLevel?: number; strategy?: number; dictionary?: any; }
+    export interface ZlibCallback { (error: Error, result: any): void }
 
     export interface Gzip extends stream.Transform { }
     export interface Gunzip extends stream.Transform { }
@@ -781,20 +782,20 @@ declare module "zlib" {
     export function createInflateRaw(options?: ZlibOptions): InflateRaw;
     export function createUnzip(options?: ZlibOptions): Unzip;
 
-    export function deflate(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function deflateSync(buf: Buffer, options?: ZlibOptions): any;
-    export function deflateRaw(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function deflateRawSync(buf: Buffer, options?: ZlibOptions): any;
-    export function gzip(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function gzipSync(buf: Buffer, options?: ZlibOptions): any;
-    export function gunzip(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function gunzipSync(buf: Buffer, options?: ZlibOptions): any;
-    export function inflate(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function inflateSync(buf: Buffer, options?: ZlibOptions): any;
-    export function inflateRaw(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function inflateRawSync(buf: Buffer, options?: ZlibOptions): any;
-    export function unzip(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function unzipSync(buf: Buffer, options?: ZlibOptions): any;
+    export function deflate(buf: Buffer | string, options: ZlibOptions | ZlibCallback, callback?: ZlibCallback): void;
+    export function deflateSync(buf: Buffer | string, options?: ZlibOptions): any;
+    export function deflateRaw(buf: Buffer | string, options: ZlibOptions | ZlibCallback, callback?: ZlibCallback): void;
+    export function deflateRawSync(buf: Buffer | string, options?: ZlibOptions): any;
+    export function gzip(buf: Buffer | string, options: ZlibOptions | ZlibCallback, callback?: ZlibCallback): void;
+    export function gzipSync(buf: Buffer | string, options?: ZlibOptions): any;
+    export function gunzip(buf: Buffer | string, options: ZlibOptions | ZlibCallback, callback?: ZlibCallback): void;
+    export function gunzipSync(buf: Buffer | string, options?: ZlibOptions): any;
+    export function inflate(buf: Buffer | string, options: ZlibOptions | ZlibCallback, callback?: ZlibCallback): void;
+    export function inflateSync(buf: Buffer | string, options?: ZlibOptions): any;
+    export function inflateRaw(buf: Buffer | string, options: ZlibOptions | ZlibCallback, callback?: ZlibCallback): void;
+    export function inflateRawSync(buf: Buffer | string, options?: ZlibOptions): any;
+    export function unzip(buf: Buffer | string, options: ZlibOptions | ZlibCallback, callback?: ZlibCallback): void;
+    export function unzipSync(buf: Buffer | string, options?: ZlibOptions): any;
 
     // Constants
     export var Z_NO_FLUSH: number;

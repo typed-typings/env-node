@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "module": "commonjs"
+    "module": "commonjs",
+    "target": "es5",
+    "noImplicitAny": true
   },
   "files": [
     "node.d.ts"

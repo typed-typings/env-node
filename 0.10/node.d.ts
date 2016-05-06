@@ -483,6 +483,7 @@ declare module "cluster" {
 declare module "zlib" {
     import stream = require("stream");
     export interface ZlibOptions { chunkSize?: number; windowBits?: number; level?: number; memLevel?: number; strategy?: number; dictionary?: any; }
+    export interface ZlibCallback { (error: Error, result: any): void }
 
     export interface Gzip extends stream.Transform { }
     export interface Gunzip extends stream.Transform { }
@@ -500,13 +501,13 @@ declare module "zlib" {
     export function createInflateRaw(options?: ZlibOptions): InflateRaw;
     export function createUnzip(options?: ZlibOptions): Unzip;
 
-    export function deflate(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function deflateRaw(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function gzip(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function gunzip(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function inflate(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function inflateRaw(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function unzip(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
+    export function deflate(buf: Buffer | string, callback: ZlibCallback): void;
+    export function deflateRaw(buf: Buffer | string, callback: ZlibCallback): void;
+    export function gzip(buf: Buffer | string, callback: ZlibCallback): void;
+    export function gunzip(buf: Buffer | string, callback: ZlibCallback): void;
+    export function inflate(buf: Buffer | string, callback: ZlibCallback): void;
+    export function inflateRaw(buf: Buffer | string, callback: ZlibCallback): void;
+    export function unzip(buf: Buffer | string, callback: ZlibCallback): void;
 
     // Constants
     export var Z_NO_FLUSH: number;

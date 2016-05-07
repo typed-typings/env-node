@@ -81,6 +81,23 @@ declare var Buffer: {
     concat(list: Buffer[], totalLength?: number): Buffer;
 }
 
+// Console class (compatible with TypeScript `lib.d.ts`).
+declare interface Console {
+  log (msg: any, ...params: any[]): void;
+  info (msg: any, ...params: any[]): void;
+  warn (msg: any, ...params: any[]): void;
+  error (msg: any, ...params: any[]): void;
+  dir (value: any, ...params: any[]): void;
+  time (timerName?: string): void;
+  timeEnd (timerName?: string): void;
+  trace (msg: any, ...params: any[]): void;
+  assert (test?: boolean, msg?: string, ...params: any[]): void;
+
+  Console: new (stdout: WritableStream) => Console;
+}
+
+declare var console: Console;
+
 /************************************************
 *                                               *
 *                   INTERFACES                  *

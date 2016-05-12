@@ -1363,6 +1363,13 @@ declare module "dgram" {
 
     interface Socket extends events.EventEmitter {
         send(buf: Buffer, offset: number, length: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+        send(buf: Buffer, offset: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+        send(buf: Buffer, length: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+        send(buf: Buffer, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+        send(str: string, offset: number, length: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+        send(str: string, offset: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+        send(str: string, length: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+        send(str: string, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
         bind(port: number, address?: string, callback?: () => void): void;
         close(): void;
         address(): AddressInfo;

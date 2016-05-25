@@ -25,7 +25,7 @@ interface Error {
    *
    * The first line is formatted as <error class name>: <error message>, and is followed by a series of stack frames (each line beginning with "at "). Each frame describes a call site within the code that lead to the error being generated. V8 attempts to display a name for each function (by variable name, function name, or object method name), but occasionally it will not be able to find a suitable name. If V8 cannot determine a name for the function, only location information will be displayed for that frame. Otherwise, the determined function name will be displayed with location information appended in parentheses.
    */
-  stack?: string;
+  // stack?: string;
 
   /**
    * Returns the string description of error as set by calling new Error(message). The message passed to the constructor will also appear in the first line of the stack trace of the Error, however changing this property after the Error object is created may not change the first line of the stack trace.

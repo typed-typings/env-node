@@ -736,15 +736,11 @@ namespace vm_tests {
 /// Error tests
 ////////////////////////////////////////////////////
 
-new Error().stack;
-
 class CustomError extends Error {
   constructor() {
     super('Message');
     Error.captureStackTrace(this, CustomError);
   }
 }
-
-new CustomError().stack;
 
 Error.stackTraceLimit(10);

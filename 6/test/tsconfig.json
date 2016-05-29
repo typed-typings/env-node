@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "allowUnreachableCode": true
+  },
+  "files": [
+    "../node.d.ts",
+    "index.ts"
+  ]
+}

@@ -79,8 +79,16 @@ interface ErrorConstructor {
 }
 
 // ES2015 collection types
+interface NodeCollection {
+  size: number;
+}
+interface NodeWeakCollection {
+}
+interface NodeCollectionConstructor<T> {
+  prototype: T;
+}
 
-interface Map<K, V> {
+interface Map<K, V> extends NodeCollection {
   clear(): void;
   delete(key: K): boolean;
   entries(): Array<[K, V]>;
@@ -89,36 +97,32 @@ interface Map<K, V> {
   has(key: K): boolean;
   keys(): Array<K>;
   set(key: K, value?: V): Map<K, V>;
-  // size: number;
   values(): Array<V>;
   // [Symbol.iterator]():Array<[K,V]>;
   // [Symbol.toStringTag]: "Map";
 }
 
-interface MapConstructor {
+interface MapConstructor extends NodeCollectionConstructor<Map<any, any>> {
   new (): Map<any, any>;
   new <K, V>(): Map<K, V>;
-  // prototype: Map<any, any>;
 }
 declare var Map: MapConstructor;
 
-interface WeakMap<K, V> {
+interface WeakMap<K, V> extends NodeWeakCollection {
   clear(): void;
   delete(key: K): boolean;
   get(key: K): V | void;
   has(key: K): boolean;
   set(key: K, value?: V): WeakMap<K, V>;
-
 }
 
-interface WeakMapConstructor {
+interface WeakMapConstructor extends NodeCollectionConstructor<WeakMap<any, any>> {
   new (): WeakMap<any, any>;
   new <K, V>(): WeakMap<K, V>;
-  // prototype: WeakMap<any, any>;
 }
 declare var WeakMap: WeakMapConstructor;
 
-interface Set<T> {
+interface Set<T> extends NodeCollection {
   add(value: T): Set<T>;
   clear(): void;
   delete(value: T): boolean;
@@ -126,21 +130,19 @@ interface Set<T> {
   forEach(callbackfn: (value: T, index: T, set: Set<T>) => void, thisArg?: any): void;
   has(value: T): boolean;
   keys(): Array<T>;
-  // size: number;
   values(): Array<T>;
   // [Symbol.iterator]():Array<T>;
   // [Symbol.toStringTag]: "Set";
 }
 
-interface SetConstructor {
+interface SetConstructor extends NodeCollectionConstructor<Set<any>> {
   new (): Set<any>;
   new <T>(): Set<T>;
   new <T>(iterable: Array<T>): Set<T>;
-  // prototype: Set<any>;
 }
 declare var Set: SetConstructor;
 
-interface WeakSet<T> {
+interface WeakSet<T> extends NodeWeakCollection {
   add(value: T): WeakSet<T>;
   clear(): void;
   delete(value: T): boolean;
@@ -148,11 +150,10 @@ interface WeakSet<T> {
   // [Symbol.toStringTag]: "WeakSet";
 }
 
-interface WeakSetConstructor {
+interface WeakSetConstructor  extends NodeCollectionConstructor<WeakSet<any>> {
   new (): WeakSet<any>;
   new <T>(): WeakSet<T>;
   new <T>(iterable: Array<T>): WeakSet<T>;
-  // prototype: WeakSet<any>;
 }
 declare var WeakSet: WeakSetConstructor;
 

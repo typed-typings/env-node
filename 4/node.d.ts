@@ -83,15 +83,15 @@ interface ErrorConstructor {
 interface Map<K, V> {
   clear(): void;
   delete(key: K): boolean;
-  entries(): IterableIterator<[K, V]>;
+  entries(): Array<[K, V]>;
   forEach(callbackfn: (value: V, index: K, map: Map<K, V>) => void, thisArg?: any): void;
   get(key: K): V;
   has(key: K): boolean;
-  keys(): IterableIterator<K>;
+  keys(): Array<K>;
   set(key: K, value?: V): Map<K, V>;
   // size: number;
-  values(): IterableIterator<V>;
-  [Symbol.iterator]():IterableIterator<[K,V]>;
+  values(): Array<V>;
+  // [Symbol.iterator]():Array<[K,V]>;
   // [Symbol.toStringTag]: "Map";
 }
 
@@ -105,7 +105,7 @@ declare var Map: MapConstructor;
 interface WeakMap<K, V> {
   clear(): void;
   delete(key: K): boolean;
-  get(key: K): V | undefined;
+  get(key: K): V | void;
   has(key: K): boolean;
   set(key: K, value?: V): WeakMap<K, V>;
 
@@ -122,20 +122,20 @@ interface Set<T> {
   add(value: T): Set<T>;
   clear(): void;
   delete(value: T): boolean;
-  entries(): IterableIterator<[T, T]>;
+  entries(): Array<[T, T]>;
   forEach(callbackfn: (value: T, index: T, set: Set<T>) => void, thisArg?: any): void;
   has(value: T): boolean;
-  keys(): IterableIterator<T>;
+  keys(): Array<T>;
   // size: number;
-  values(): IterableIterator<T>;
-  [Symbol.iterator]():IterableIterator<T>;
+  values(): Array<T>;
+  // [Symbol.iterator]():Array<T>;
   // [Symbol.toStringTag]: "Set";
 }
 
 interface SetConstructor {
   new (): Set<any>;
   new <T>(): Set<T>;
-  new <T>(iterable: Iterable<T>): Set<T>;
+  new <T>(iterable: Array<T>): Set<T>;
   // prototype: Set<any>;
 }
 declare var Set: SetConstructor;
@@ -151,7 +151,7 @@ interface WeakSet<T> {
 interface WeakSetConstructor {
   new (): WeakSet<any>;
   new <T>(): WeakSet<T>;
-  new <T>(iterable: Iterable<T>): WeakSet<T>;
+  new <T>(iterable: Array<T>): WeakSet<T>;
   // prototype: WeakSet<any>;
 }
 declare var WeakSet: WeakSetConstructor;

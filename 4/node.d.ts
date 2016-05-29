@@ -78,13 +78,83 @@ interface ErrorConstructor {
   stackTraceLimit(limit: number): void;
 }
 
-// compat for TypeScript 1.8
-// if you use with --target es3 or --target es5 and use below definitions,
-// use the lib.es6.d.ts that is bundled with TypeScript 1.8.
-interface MapConstructor {}
-interface WeakMapConstructor {}
-interface SetConstructor {}
-interface WeakSetConstructor {}
+// ES2015 collection types
+
+interface Map<K, V> {
+  clear(): void;
+  delete(key: K): boolean;
+  entries(): IterableIterator<[K, V]>;
+  forEach(callbackfn: (value: V, index: K, map: Map<K, V>) => void, thisArg?: any): void;
+  get(key: K): V;
+  has(key: K): boolean;
+  keys(): IterableIterator<K>;
+  set(key: K, value?: V): Map<K, V>;
+  // size: number;
+  values(): IterableIterator<V>;
+  [Symbol.iterator]():IterableIterator<[K,V]>;
+  // [Symbol.toStringTag]: "Map";
+}
+
+interface MapConstructor {
+  new (): Map<any, any>;
+  new <K, V>(): Map<K, V>;
+  // prototype: Map<any, any>;
+}
+declare var Map: MapConstructor;
+
+interface WeakMap<K, V> {
+  clear(): void;
+  delete(key: K): boolean;
+  get(key: K): V | undefined;
+  has(key: K): boolean;
+  set(key: K, value?: V): WeakMap<K, V>;
+
+}
+
+interface WeakMapConstructor {
+  new (): WeakMap<any, any>;
+  new <K, V>(): WeakMap<K, V>;
+  // prototype: WeakMap<any, any>;
+}
+declare var WeakMap: WeakMapConstructor;
+
+interface Set<T> {
+  add(value: T): Set<T>;
+  clear(): void;
+  delete(value: T): boolean;
+  entries(): IterableIterator<[T, T]>;
+  forEach(callbackfn: (value: T, index: T, set: Set<T>) => void, thisArg?: any): void;
+  has(value: T): boolean;
+  keys(): IterableIterator<T>;
+  // size: number;
+  values(): IterableIterator<T>;
+  [Symbol.iterator]():IterableIterator<T>;
+  // [Symbol.toStringTag]: "Set";
+}
+
+interface SetConstructor {
+  new (): Set<any>;
+  new <T>(): Set<T>;
+  new <T>(iterable: Iterable<T>): Set<T>;
+  // prototype: Set<any>;
+}
+declare var Set: SetConstructor;
+
+interface WeakSet<T> {
+  add(value: T): WeakSet<T>;
+  clear(): void;
+  delete(value: T): boolean;
+  has(value: T): boolean;
+  // [Symbol.toStringTag]: "WeakSet";
+}
+
+interface WeakSetConstructor {
+  new (): WeakSet<any>;
+  new <T>(): WeakSet<T>;
+  new <T>(iterable: Iterable<T>): WeakSet<T>;
+  // prototype: WeakSet<any>;
+}
+declare var WeakSet: WeakSetConstructor;
 
 /************************************************
 *                                               *

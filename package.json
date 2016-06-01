@@ -4,8 +4,8 @@
   "description": "Typescript typings for nodejs",
   "main": "index.js",
   "scripts": {
-    "build": "tsc -p 0.8 && tsc -p 0.10 && tsc -p 0.11 && tsc -p 0.12 && tsc -p 4",
-    "test": "tsc -p 0.11/test && tsc -p 0.12/test && tsc -p 4/test",
+    "build": "tsc -p 0.8 && tsc -p 0.10 && tsc -p 0.11 && tsc -p 0.12 && tsc -p 4 && tsc -p 6",
+    "test": "tsc -p 0.11/test && tsc -p 0.12/test && tsc -p 4/test && tsc -p 6/test",
     "build+test": "npm run build && npm test"
   },
   "repository": {

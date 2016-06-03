@@ -4,9 +4,9 @@
   "description": "Typescript typings for nodejs",
   "main": "index.js",
   "scripts": {
-    "build": "tsc -p 0.8 && tsc -p 0.10 && tsc -p 0.11 && tsc -p 0.12 && tsc -p 4",
-    "build-es6": "tsc --target es6 -p 0.8 && tsc --target es6 -p 0.10 && tsc --target es6 -p 0.11 && tsc --target es6 -p 0.12 && tsc --target es6 -p 4",
-    "test": "tsc -p 0.11/test && tsc -p 0.12/test && tsc -p 4/test"
+    "build": "tsc -p 0.8 && tsc -p 0.10 && tsc -p 0.11 && tsc -p 0.12 && tsc -p 4 && tsc -p 6",
+    "build-es6": "tsc --target es6 -p 0.8 && tsc --target es6 -p 0.10 && tsc --target es6 -p 0.11 && tsc --target es6 -p 0.12 && tsc --target es6 -p 4 && tsc --target es6 -p 6",
+    "test": "tsc -p 0.11/test && tsc -p 0.12/test && tsc -p 4/test && tsc -p 6/test"
   },
   "repository": {
     "type": "git",

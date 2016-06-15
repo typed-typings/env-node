@@ -108,13 +108,13 @@ var content: string,
     buffer: Buffer;
 
 content = fs.readFileSync('testfile', 'utf8');
-content = fs.readFileSync('testfile', {encoding : 'utf8'});
+content = fs.readFileSync('testfile', { encoding: 'utf8' });
 buffer = fs.readFileSync('testfile');
-buffer = fs.readFileSync('testfile', {flag : 'r'});
+buffer = fs.readFileSync('testfile', { flag: 'r' });
 fs.readFile('testfile', 'utf8', (err, data) => content = data);
-fs.readFile('testfile', {encoding : 'utf8'}, (err, data) => content = data);
+fs.readFile('testfile', { encoding: 'utf8' }, (err, data) => content = data);
 fs.readFile('testfile', (err, data) => buffer = data);
-fs.readFile('testfile', {flag : 'r'}, (err, data) => buffer = data);
+fs.readFile('testfile', { flag: 'r' }, (err, data) => buffer = data);
 
 class Networker extends events.EventEmitter {
     constructor() {
@@ -145,7 +145,7 @@ tempDir = fs.mkdtempSync('/tmp/foo-');
 
 function bufferTests() {
     var utf8Buffer = new Buffer('test');
-    var base64Buffer = new Buffer('','base64');
+    var base64Buffer = new Buffer('', 'base64');
     var octets: Uint8Array = null;
     var octetBuffer = new Buffer(octets);
     var sharedBuffer = new Buffer(octets.buffer);
@@ -159,7 +159,7 @@ function bufferTests() {
 
     // Class Method: Buffer.from(array)
     {
-        const buf: Buffer = Buffer.from([0x62,0x75,0x66,0x66,0x65,0x72]);
+        const buf: Buffer = Buffer.from([0x62, 0x75, 0x66, 0x66, 0x65, 0x72]);
     }
 
     // Class Method: Buffer.from(arrayBuffer[, byteOffset[, length]])
@@ -224,8 +224,8 @@ function bufferTests() {
 
     // Buffer has Uint8Array's buffer field (an ArrayBuffer).
     {
-      let buffer = new Buffer('123');
-      let octets = new Uint8Array(buffer.buffer);
+        let buffer = new Buffer('123');
+        let octets = new Uint8Array(buffer.buffer);
     }
 }
 
@@ -274,42 +274,42 @@ var hmacResult: string = crypto.createHmac('md5', 'hello').update('world').diges
 {
     let hmac: crypto.Hmac;
     (hmac = crypto.createHmac('md5', 'hello')).end('world', 'utf8', () => {
-        let hash: Buffer|string = hmac.read();
+        let hash: Buffer | string = hmac.read();
     });
 }
 
 function crypto_cipher_decipher_string_test() {
-	var key:Buffer = new Buffer([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7]);
-	var clearText:string = "This is the clear text.";
-	var cipher:crypto.Cipher = crypto.createCipher("aes-128-ecb", key);
-	var cipherText:string = cipher.update(clearText, "utf8", "hex");
-	cipherText += cipher.final("hex");
+    var key: Buffer = new Buffer([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7]);
+    var clearText: string = "This is the clear text.";
+    var cipher: crypto.Cipher = crypto.createCipher("aes-128-ecb", key);
+    var cipherText: string = cipher.update(clearText, "utf8", "hex");
+    cipherText += cipher.final("hex");
 
-	var decipher:crypto.Decipher = crypto.createDecipher("aes-128-ecb", key);
-	var clearText2:string = decipher.update(cipherText, "hex", "utf8");
-	clearText2 += decipher.final("utf8");
+    var decipher: crypto.Decipher = crypto.createDecipher("aes-128-ecb", key);
+    var clearText2: string = decipher.update(cipherText, "hex", "utf8");
+    clearText2 += decipher.final("utf8");
 
-	assert.equal(clearText2, clearText);
+    assert.equal(clearText2, clearText);
 }
 
 function crypto_cipher_decipher_buffer_test() {
-	var key:Buffer = new Buffer([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7]);
-	var clearText:Buffer = new Buffer([1, 2, 3, 4, 5, 6, 7, 8, 9, 8, 7, 6, 5, 4]);
-	var cipher:crypto.Cipher = crypto.createCipher("aes-128-ecb", key);
-	var cipherBuffers:Buffer[] = [];
-	cipherBuffers.push(cipher.update(clearText));
-	cipherBuffers.push(cipher.final());
+    var key: Buffer = new Buffer([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7]);
+    var clearText: Buffer = new Buffer([1, 2, 3, 4, 5, 6, 7, 8, 9, 8, 7, 6, 5, 4]);
+    var cipher: crypto.Cipher = crypto.createCipher("aes-128-ecb", key);
+    var cipherBuffers: Buffer[] = [];
+    cipherBuffers.push(cipher.update(clearText));
+    cipherBuffers.push(cipher.final());
 
-	var cipherText:Buffer = Buffer.concat(cipherBuffers);
+    var cipherText: Buffer = Buffer.concat(cipherBuffers);
 
-	var decipher:crypto.Decipher = crypto.createDecipher("aes-128-ecb", key);
-	var decipherBuffers:Buffer[] = [];
-	decipherBuffers.push(decipher.update(cipherText));
-	decipherBuffers.push(decipher.final());
+    var decipher: crypto.Decipher = crypto.createDecipher("aes-128-ecb", key);
+    var decipherBuffers: Buffer[] = [];
+    decipherBuffers.push(decipher.update(cipherText));
+    decipherBuffers.push(decipher.final());
 
-	var clearText2:Buffer = Buffer.concat(decipherBuffers);
+    var clearText2: Buffer = Buffer.concat(decipherBuffers);
 
-	assert.deepEqual(clearText2, clearText);
+    assert.deepEqual(clearText2, clearText);
 }
 
 ////////////////////////////////////////////////////
@@ -323,8 +323,8 @@ var ctx: tls.SecureContext = tls.createSecureContext({
 var blah = ctx.context;
 
 var tlsOpts: tls.TlsOptions = {
-	host: "127.0.0.1",
-	port: 55
+    host: "127.0.0.1",
+    port: 55
 };
 var tlsSocket = tls.connect(tlsOpts);
 
@@ -336,7 +336,7 @@ http.createServer().listen(0).close().address();
 net.createServer().listen(0).close().address();
 
 var request = http.request('http://0.0.0.0');
-request.once('error', function () {});
+request.once('error', function() { });
 request.setNoDelay(true);
 request.abort();
 
@@ -349,24 +349,24 @@ namespace http_tests {
     var codeMessage = http.STATUS_CODES['400'];
     var codeMessage = http.STATUS_CODES[400];
 
-	var agent: http.Agent = new http.Agent({
-		keepAlive: true,
-		keepAliveMsecs: 10000,
-		maxSockets: Infinity,
-		maxFreeSockets: 256
-	});
+    var agent: http.Agent = new http.Agent({
+        keepAlive: true,
+        keepAliveMsecs: 10000,
+        maxSockets: Infinity,
+        maxFreeSockets: 256
+    });
 
-	var agent: http.Agent = http.globalAgent;
+    var agent: http.Agent = http.globalAgent;
 
-	http.request({
-		agent: false
-	});
-	http.request({
-		agent: agent
-	});
-	http.request({
-		agent: undefined
-	});
+    http.request({
+        agent: false
+    });
+    http.request({
+        agent: agent
+    });
+    http.request({
+        agent: undefined
+    });
 }
 
 ////////////////////////////////////////////////////
@@ -420,19 +420,13 @@ var ds: dgram.Socket = dgram.createSocket("udp4", (msg: Buffer, rinfo: dgram.Rem
 var ai: dgram.AddressInfo = ds.address();
 ds.send(new Buffer("hello"), 0, 5, 5000, "127.0.0.1", (error: Error, bytes: number): void => {
 });
-ds.send(new Buffer("hello"), 5000, "127.0.0.1", (error: Error, bytes: number): void => {
-});
-ds.send("hello", 0, 5, 5000, "127.0.0.1", (error: Error, bytes: number): void => {
-});
-ds.send("hello", 5000, "127.0.0.1", (error: Error, bytes: number): void => {
-});
 
 ////////////////////////////////////////////////////
 ///Querystring tests : https://nodejs.org/api/querystring.html
 ////////////////////////////////////////////////////
 
 namespace querystring_tests {
-    type SampleObject = {a: string; b: number;}
+    type SampleObject = { a: string; b: number; }
 
     {
         let obj: SampleObject;
@@ -485,7 +479,7 @@ namespace path_tests {
     try {
         path.join('foo', {}, 'bar');
     }
-    catch(error) {
+    catch (error) {
 
     }
 
@@ -521,92 +515,92 @@ namespace path_tests {
     path.isAbsolute('.')         // false
 
     path.relative('C:\\orandea\\test\\aaa', 'C:\\orandea\\impl\\bbb')
-// returns
-//    '..\\..\\impl\\bbb'
+    // returns
+    //    '..\\..\\impl\\bbb'
 
     path.relative('/data/orandea/test/aaa', '/data/orandea/impl/bbb')
-// returns
-//    '../../impl/bbb'
+    // returns
+    //    '../../impl/bbb'
 
     path.dirname('/foo/bar/baz/asdf/quux')
-// returns
-//    '/foo/bar/baz/asdf'
+    // returns
+    //    '/foo/bar/baz/asdf'
 
     path.basename('/foo/bar/baz/asdf/quux.html')
-// returns
-//    'quux.html'
+    // returns
+    //    'quux.html'
 
     path.basename('/foo/bar/baz/asdf/quux.html', '.html')
-// returns
-//    'quux'
+    // returns
+    //    'quux'
 
     path.extname('index.html')
-// returns
-//    '.html'
+    // returns
+    //    '.html'
 
     path.extname('index.coffee.md')
-// returns
-//    '.md'
+    // returns
+    //    '.md'
 
     path.extname('index.')
-// returns
-//    '.'
+    // returns
+    //    '.'
 
     path.extname('index')
-// returns
-//    ''
+    // returns
+    //    ''
 
     'foo/bar/baz'.split(path.sep)
-// returns
-//        ['foo', 'bar', 'baz']
+    // returns
+    //        ['foo', 'bar', 'baz']
 
     'foo\\bar\\baz'.split(path.sep)
-// returns
-//        ['foo', 'bar', 'baz']
+    // returns
+    //        ['foo', 'bar', 'baz']
 
     console.log(process.env.PATH)
-// '/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin'
+    // '/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin'
 
     process.env.PATH.split(path.delimiter)
-// returns
-//        ['/usr/bin', '/bin', '/usr/sbin', '/sbin', '/usr/local/bin']
+    // returns
+    //        ['/usr/bin', '/bin', '/usr/sbin', '/sbin', '/usr/local/bin']
 
     console.log(process.env.PATH)
-// 'C:\Windows\system32;C:\Windows;C:\Program Files\nodejs\'
+    // 'C:\Windows\system32;C:\Windows;C:\Program Files\nodejs\'
 
     process.env.PATH.split(path.delimiter)
-// returns
-//        ['C:\Windows\system32', 'C:\Windows', 'C:\Program Files\nodejs\']
+    // returns
+    //        ['C:\Windows\system32', 'C:\Windows', 'C:\Program Files\nodejs\']
 
     path.parse('/home/user/dir/file.txt')
-// returns
-//    {
-//        root : "/",
-//        dir : "/home/user/dir",
-//        base : "file.txt",
-//        ext : ".txt",
-//        name : "file"
-//    }
+    // returns
+    //    {
+    //        root : "/",
+    //        dir : "/home/user/dir",
+    //        base : "file.txt",
+    //        ext : ".txt",
+    //        name : "file"
+    //    }
 
     path.parse('C:\\path\\dir\\index.html')
-// returns
-//    {
-//        root : "C:\",
-//        dir : "C:\path\dir",
-//        base : "index.html",
-//        ext : ".html",
-//        name : "index"
-//    }
+    // returns
+    //    {
+    //        root : "C:\",
+    //        dir : "C:\path\dir",
+    //        base : "index.html",
+    //        ext : ".html",
+    //        name : "index"
+    //    }
 
     path.format({
-        root : "/",
-        dir : "/home/user/dir",
-        base : "file.txt",
-        ext : ".txt",
-        name : "file"
+        root: "/",
+        dir: "/home/user/dir",
+        base: "file.txt",
+        ext: ".txt",
+        name: "file"
     });
-// returns
-//    '/home/user/dir/file.txt'
+    // returns
+    //    '/home/user/dir/file.txt'
 }
 
 ////////////////////////////////////////////////////
@@ -669,7 +663,7 @@ namespace readline_tests {
     }
 
     {
-        let data: string|Buffer;
+        let data: string | Buffer;
         let key: readline.Key;
 
         rl.write(data);
@@ -686,8 +680,8 @@ namespace readline_tests {
 
     {
         let stream: NodeJS.WritableStream;
-        let dx: number|string;
-        let dy: number|string;
+        let dx: number | string;
+        let dy: number | string;
 
         readline.moveCursor(stream, dx, dy);
     }
@@ -765,7 +759,7 @@ namespace os_tests {
     }
 
     {
-        let result: {[index: string]: os.NetworkInterfaceInfo[]};
+        let result: { [index: string]: os.NetworkInterfaceInfo[] };
 
         result = os.networkInterfaces();
     }

@@ -1362,10 +1362,8 @@ declare module "dgram" {
     export function createSocket(type: string, callback?: (msg: Buffer, rinfo: RemoteInfo) => void): Socket;
 
     interface Socket extends events.EventEmitter {
-        send(msg: Buffer | string | Array<any>, offset: number, length: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
-        send(msg: Buffer | string | Array<any>, offset: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
-        send(msg: Buffer | string | Array<any>, length: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
-        send(msg: Buffer | string | Array<any>, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+        send(msg: Buffer | string | Array<Buffer | string>, offset: number, length: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+        send(msg: Buffer | string | Array<Buffer | string>, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
         bind(port: number, address?: string, callback?: () => void): void;
         close(): void;
         address(): AddressInfo;

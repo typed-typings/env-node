@@ -659,7 +659,6 @@ declare module "http" {
         end(buffer: Buffer, cb?: Function): void;
         end(str: string, cb?: Function): void;
         end(str: string, encoding?: string, cb?: Function): void;
-        end(data?: any, encoding?: string): void;
     }
     export interface ClientRequest extends events.EventEmitter, stream.Writable {
         // Extended base methods

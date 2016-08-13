@@ -482,13 +482,6 @@ namespace path_tests {
     // returns
     //'/foo/bar/baz/asdf'
 
-    try {
-        path.join('foo', {}, 'bar');
-    }
-    catch (error) {
-
-    }
-
     path.resolve('foo/bar', '/tmp/file/', '..', 'a/../subfile');
     //Is similar to:
     //

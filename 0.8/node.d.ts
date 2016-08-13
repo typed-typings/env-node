@@ -265,6 +265,14 @@ declare module "http" {
     import net = require("net");
     import stream = require("stream");
 
+    export interface RequestHeaders {
+      [header: string]: number | string | string[];
+    }
+
+    export interface ResponseHeaders {
+      [header: string]: string | string[];
+    }
+
     /**
      * Options for http.request()
     */
@@ -300,7 +308,7 @@ declare module "http" {
         /**
          * An object containing request headers.
          */
-        headers?: { [index: string]: any };
+        headers?: RequestHeaders;
         /**
          * Basic authentication i.e. 'user:password' to compute an Authorization header.
          */
@@ -324,8 +332,8 @@ declare module "http" {
     export interface ServerRequest extends EventEmitter, stream.ReadableStream {
         method: string;
         url: string;
-        headers: string;
-        trailers: string;
+        headers: ResponseHeaders;
+        trailers: ResponseHeaders;
         httpVersion: string;
         setEncoding(encoding?: string): void;
         pause(): void;
@@ -338,15 +346,15 @@ declare module "http" {
         write(buffer: Buffer): boolean;
 
         writeContinue(): void;
-        writeHead(statusCode: number, reasonPhrase?: string, headers?: any): void;
-        writeHead(statusCode: number, headers?: any): void;
+        writeHead(statusCode: number, statusText?: string, headers?: RequestHeaders): void;
+        writeHead(statusCode: number, headers?: RequestHeaders): void;
         statusCode: number;
         setHeader(name: string, value: string): void;
         sendDate: boolean;
         getHeader(name: string): string;
         removeHeader(name: string): void;
         write(chunk: any, encoding?: string): any;
-        addTrailers(headers: any): void;
+        addTrailers(headers: RequestHeaders): void;
         end(data?: any, encoding?: string): void;
     }
     export interface ClientRequest extends EventEmitter, stream.WritableStream {
@@ -364,8 +372,8 @@ declare module "http" {
     export interface ClientResponse extends EventEmitter, stream.ReadableStream {
         statusCode: number;
         httpVersion: string;
-        headers: any;
-        trailers: any;
+        headers: ResponseHeaders;
+        trailers: ResponseHeaders;
         setEncoding(encoding?: string): void;
         pause(): void;
         resume(): void;
@@ -376,7 +384,7 @@ declare module "http" {
      * A collection of all the standard HTTP response status codes, and the short description of each. For example, http.STATUS_CODES[404] === 'Not Found'.
      */
     export var STATUS_CODES: {[code: number]: string};
-    export function createServer(requestListener?: (request: ServerRequest, response: ServerResponse) =>void ): Server;
+    export function createServer(requestListener?: (request: ServerRequest, response: ServerResponse) => void): Server;
     export function createClient(port?: number, host?: string): any;
     export function request(options: string | RequestOptions, callback?: Function): ClientRequest;
     export function get(options: string | RequestOptions, callback?: Function): ClientRequest;
@@ -891,7 +899,7 @@ declare module "fs" {
 
 declare module "path" {
     export function normalize(p: string): string;
-    export function join(...paths: any[]): string;
+    export function join(...paths: string[]): string;
     export function resolve(from: string, to: string): string;
     export function resolve(from: string, from2: string, to: string): string;
     export function resolve(from: string, from2: string, from3: string, to: string): string;

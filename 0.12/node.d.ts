@@ -473,6 +473,14 @@ declare module "http" {
     import * as net from "net";
     import * as stream from "stream";
 
+    export interface RequestHeaders {
+      [header: string]: number | string | string[];
+    }
+
+    export interface ResponseHeaders {
+      [header: string]: string | string[];
+    }
+
     /**
      * Options for http.request()
     */
@@ -508,7 +516,7 @@ declare module "http" {
         /**
          * An object containing request headers.
          */
-        headers?: { [index: string]: any };
+        headers?: RequestHeaders;
         /**
          * Basic authentication i.e. 'user:password' to compute an Authorization header.
          */
@@ -546,8 +554,8 @@ declare module "http" {
         write(str: string, encoding?: string, fd?: string): boolean;
 
         writeContinue(): void;
-        writeHead(statusCode: number, reasonPhrase?: string, headers?: any): void;
-        writeHead(statusCode: number, headers?: any): void;
+        writeHead(statusCode: number, statusText?: string, headers?: RequestHeaders): void;
+        writeHead(statusCode: number, headers?: RequestHeaders): void;
         statusCode: number;
         statusMessage: string;
         setHeader(name: string, value: string): void;
@@ -555,7 +563,7 @@ declare module "http" {
         getHeader(name: string): string;
         removeHeader(name: string): void;
         write(chunk: any, encoding?: string): any;
-        addTrailers(headers: any): void;
+        addTrailers(headers: RequestHeaders): void;
 
         // Extended base methods
         end(): void;
@@ -586,10 +594,10 @@ declare module "http" {
     }
     export interface IncomingMessage extends events.EventEmitter, stream.Readable {
         httpVersion: string;
-        headers: any;
+        headers: ResponseHeaders;
         rawHeaders: string[];
-        trailers: any;
-        rawTrailers: any;
+        trailers: ResponseHeaders;
+        rawTrailers: string[];
         setTimeout(msecs: number, callback: Function): NodeJS.Timer;
         /**
          * Only valid for request obtained from http.Server.
@@ -614,41 +622,41 @@ declare module "http" {
      */
     export interface ClientResponse extends IncomingMessage { }
 
-	export interface AgentOptions {
-		/**
-		 * Keep sockets around in a pool to be used by other requests in the future. Default = false
-		 */
-		keepAlive?: boolean;
-		/**
-		 * When using HTTP KeepAlive, how often to send TCP KeepAlive packets over sockets being kept alive. Default = 1000.
-		 * Only relevant if keepAlive is set to true.
-		 */
-		keepAliveMsecs?: number;
-		/**
-		 * Maximum number of sockets to allow per host. Default for Node 0.10 is 5, default for Node 0.12 is Infinity
-		 */
-		maxSockets?: number;
-		/**
-		 * Maximum number of sockets to leave open in a free state. Only relevant if keepAlive is set to true. Default = 256.
-		 */
-		maxFreeSockets?: number;
-	}
+    export interface AgentOptions {
+        /**
+         * Keep sockets around in a pool to be used by other requests in the future. Default = false
+         */
+        keepAlive?: boolean;
+        /**
+         * When using HTTP KeepAlive, how often to send TCP KeepAlive packets over sockets being kept alive. Default = 1000.
+         * Only relevant if keepAlive is set to true.
+         */
+        keepAliveMsecs?: number;
+        /**
+         * Maximum number of sockets to allow per host. Default for Node 0.10 is 5, default for Node 0.12 is Infinity
+         */
+        maxSockets?: number;
+        /**
+         * Maximum number of sockets to leave open in a free state. Only relevant if keepAlive is set to true. Default = 256.
+         */
+        maxFreeSockets?: number;
+    }
 
     export class Agent {
-		maxSockets: number;
-		sockets: any;
-		requests: any;
+        maxSockets: number;
+        sockets: any;
+        requests: any;
 
-		constructor(opts?: AgentOptions);
+        constructor(opts?: AgentOptions);
 
-		/**
-		 * Destroy any sockets that are currently in use by the agent.
-		 * It is usually not necessary to do this. However, if you are using an agent with KeepAlive enabled,
-		 * then it is best to explicitly shut down the agent when you know that it will no longer be used. Otherwise,
-		 * sockets may hang open for quite a long time before the server terminates them.
-		 */
-		destroy(): void;
-	}
+        /**
+         * Destroy any sockets that are currently in use by the agent.
+         * It is usually not necessary to do this. However, if you are using an agent with KeepAlive enabled,
+         * then it is best to explicitly shut down the agent when you know that it will no longer be used. Otherwise,
+         * sockets may hang open for quite a long time before the server terminates them.
+         */
+        destroy(): void;
+    }
 
     export var METHODS: string[];
 
@@ -1461,13 +1469,6 @@ declare module "path" {
      *
      * @param paths string paths to join.
      */
-    export function join(...paths: any[]): string;
-    /**
-     * Join all arguments together and normalize the resulting path.
-     * Arguments must be strings. In v0.8, non-string arguments were silently ignored. In v0.10 and up, an exception is thrown.
-     *
-     * @param paths string paths to join.
-     */
     export function join(...paths: string[]): string;
     /**
      * The right-most parameter is considered {to}.  Other parameters are considered an array of {from}.
@@ -1478,7 +1479,7 @@ declare module "path" {
      *
      * @param pathSegments string paths to join.  Non-string arguments are ignored.
      */
-    export function resolve(...pathSegments: any[]): string;
+    export function resolve(...pathSegments: string[]): string;
     /**
      * Determines whether {path} is an absolute path. An absolute path will always resolve to the same location, regardless of the working directory.
      *
@@ -1537,8 +1538,8 @@ declare module "path" {
 
     export module posix {
       export function normalize(p: string): string;
-      export function join(...paths: any[]): string;
-      export function resolve(...pathSegments: any[]): string;
+      export function join(...paths: string[]): string;
+      export function resolve(...pathSegments: string[]): string;
       export function isAbsolute(p: string): boolean;
       export function relative(from: string, to: string): string;
       export function dirname(p: string): string;
@@ -1552,8 +1553,8 @@ declare module "path" {
 
     export module win32 {
       export function normalize(p: string): string;
-      export function join(...paths: any[]): string;
-      export function resolve(...pathSegments: any[]): string;
+      export function join(...paths: string[]): string;
+      export function resolve(...pathSegments: string[]): string;
       export function isAbsolute(p: string): boolean;
       export function relative(from: string, to: string): string;
       export function dirname(p: string): string;

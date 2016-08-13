@@ -9,10 +9,36 @@
 *                                               *
 ************************************************/
 
-interface Error {
-    stack?: string;
-}
+interface NodeError {
+  /**
+   * Returns a string describing the point in the code at which the Error was instantiated.
+   *
+   * For example:
+   *
+   * ```
+   * Error: Things keep happening!
+   *    at /home/gbusey/file.js:525:2
+   *    at Frobnicator.refrobulate (/home/gbusey/business-logic.js:424:21)
+   *    at Actor.<anonymous> (/home/gbusey/actors.js:400:8)
+   *    at increaseSynergy (/home/gbusey/actors.js:701:6)
+   * ```
+   *
+   * The first line is formatted as <error class name>: <error message>, and is followed by a series of stack frames (each line beginning with "at "). Each frame describes a call site within the code that lead to the error being generated. V8 attempts to display a name for each function (by variable name, function name, or object method name), but occasionally it will not be able to find a suitable name. If V8 cannot determine a name for the function, only location information will be displayed for that frame. Otherwise, the determined function name will be displayed with location information appended in parentheses.
+   */
+  stack?: string;
 
+  /**
+   * Returns the string description of error as set by calling new Error(message). The message passed to the constructor will also appear in the first line of the stack trace of the Error, however changing this property after the Error object is created may not change the first line of the stack trace.
+   *
+   * ```
+   * const err = new Error('The message');
+   * console.log(err.message);
+   * // Prints: The message
+   * ```
+   */
+  message: string;
+}
+interface Error extends NodeError {}
 
 // compat for TypeScript 1.5.3
 // if you use with --target es3 or --target es5 and use below definitions,

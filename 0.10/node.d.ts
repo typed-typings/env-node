@@ -291,6 +291,14 @@ declare module "http" {
     import net = require("net");
     import stream = require("stream");
 
+    export interface RequestHeaders {
+      [header: string]: number | string | string[];
+    }
+
+    export interface ResponseHeaders {
+      [header: string]: string | string[];
+    }
+
     export interface Server extends events.EventEmitter {
         listen(port: number, hostname?: string, backlog?: number, callback?: Function): Server;
         listen(path: string, callback?: Function): Server;
@@ -302,8 +310,8 @@ declare module "http" {
     export interface ServerRequest extends events.EventEmitter, stream.Readable {
         method: string;
         url: string;
-        headers: any;
-        trailers: string;
+        headers: ResponseHeaders;
+        trailers: ResponseHeaders;
         httpVersion: string;
         setEncoding(encoding?: string): void;
         pause(): void;
@@ -319,15 +327,15 @@ declare module "http" {
         write(str: string, encoding?: string, fd?: string): boolean;
 
         writeContinue(): void;
-        writeHead(statusCode: number, reasonPhrase?: string, headers?: any): void;
-        writeHead(statusCode: number, headers?: any): void;
+        writeHead(statusCode: number, statusText?: string, headers?: RequestHeaders): void;
+        writeHead(statusCode: number, headers?: RequestHeaders): void;
         statusCode: number;
         setHeader(name: string, value: string): void;
         sendDate: boolean;
         getHeader(name: string): string;
         removeHeader(name: string): void;
         write(chunk: any, encoding?: string): any;
-        addTrailers(headers: any): void;
+        addTrailers(headers: RequestHeaders): void;
 
         // Extended base methods
         end(): void;
@@ -346,15 +354,15 @@ declare module "http" {
         setSocketKeepAlive(enable?: boolean, initialDelay?: number): void;
     }
 
-	/**
-	 * The client version of http.IncomingMessage
-	 */
+    /**
+     * The client version of http.IncomingMessage
+     */
     export interface ClientResponse extends events.EventEmitter, NodeJS.ReadableStream {
         statusCode: number;
         httpVersion: string;
-        headers: any;
-        trailers: any;
-		socket: net.Socket;
+        headers: ResponseHeaders;
+        trailers: ResponseHeaders;
+        socket: net.Socket;
         setEncoding(encoding?: string): void;
         pause(): void;
         resume(): void;
@@ -431,7 +439,7 @@ declare module "http" {
 		/**
 		 * An object containing request headers.
 		 */
-		headers?: { [index: string]: any };
+		headers?: RequestHeaders;
 		/**
 		 * Basic authentication i.e. 'user:password' to compute an Authorization header.
 		 */
@@ -1028,8 +1036,8 @@ declare module "fs" {
 
 declare module "path" {
     export function normalize(p: string): string;
-    export function join(...paths: any[]): string;
-    export function resolve(...pathSegments: any[]): string;
+    export function join(...paths: string[]): string;
+    export function resolve(...pathSegments: string[]): string;
     export function relative(from: string, to: string): string;
     export function dirname(p: string): string;
     export function basename(p: string, ext?: string): string;

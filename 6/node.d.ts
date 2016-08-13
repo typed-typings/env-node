@@ -608,6 +608,14 @@ declare module "http" {
     import * as net from "net";
     import * as stream from "stream";
 
+    export interface RequestHeaders {
+      [header: string]: number | string | string[];
+    }
+
+    export interface ResponseHeaders {
+      [header: string]: string | string[];
+    }
+
     export interface RequestOptions {
         protocol?: string;
         host?: string;
@@ -618,7 +626,7 @@ declare module "http" {
         socketPath?: string;
         method?: string;
         path?: string;
-        headers?: { [key: string]: any };
+        headers?: RequestHeaders;
         auth?: string;
         agent?: Agent | boolean;
     }
@@ -643,8 +651,8 @@ declare module "http" {
         write(str: string, encoding?: string, fd?: string): boolean;
 
         writeContinue(): void;
-        writeHead(statusCode: number, reasonPhrase?: string, headers?: any): void;
-        writeHead(statusCode: number, headers?: any): void;
+        writeHead(statusCode: number, statusText?: string, headers?: RequestHeaders): void;
+        writeHead(statusCode: number, headers?: RequestHeaders): void;
         statusCode: number;
         statusMessage: string;
         headersSent: boolean;
@@ -653,7 +661,7 @@ declare module "http" {
         getHeader(name: string): string;
         removeHeader(name: string): void;
         write(chunk: any, encoding?: string): any;
-        addTrailers(headers: any): void;
+        addTrailers(headers: RequestHeaders): void;
 
         // Extended base methods
         end(): void;
@@ -689,10 +697,10 @@ declare module "http" {
     }
     export interface IncomingMessage extends events.EventEmitter, stream.Readable {
         httpVersion: string;
-        headers: any;
+        headers: ResponseHeaders;
         rawHeaders: string[];
-        trailers: any;
-        rawTrailers: any;
+        trailers: ResponseHeaders;
+        rawTrailers: string[];
         setTimeout(msecs: number, callback: Function): NodeJS.Timer;
         /**
          * Only valid for request obtained from http.Server.
@@ -1760,13 +1768,6 @@ declare module "path" {
      *
      * @param paths string paths to join.
      */
-    export function join(...paths: any[]): string;
-    /**
-     * Join all arguments together and normalize the resulting path.
-     * Arguments must be strings. In v0.8, non-string arguments were silently ignored. In v0.10 and up, an exception is thrown.
-     *
-     * @param paths string paths to join.
-     */
     export function join(...paths: string[]): string;
     /**
      * The right-most parameter is considered {to}.  Other parameters are considered an array of {from}.
@@ -1777,7 +1778,7 @@ declare module "path" {
      *
      * @param pathSegments string paths to join.  Non-string arguments are ignored.
      */
-    export function resolve(...pathSegments: any[]): string;
+    export function resolve(...pathSegments: string[]): string;
     /**
      * Determines whether {path} is an absolute path. An absolute path will always resolve to the same location, regardless of the working directory.
      *
@@ -1836,8 +1837,8 @@ declare module "path" {
 
     export module posix {
         export function normalize(p: string): string;
-        export function join(...paths: any[]): string;
-        export function resolve(...pathSegments: any[]): string;
+        export function join(...paths: string[]): string;
+        export function resolve(...pathSegments: string[]): string;
         export function isAbsolute(p: string): boolean;
         export function relative(from: string, to: string): string;
         export function dirname(p: string): string;
@@ -1851,8 +1852,8 @@ declare module "path" {
 
     export module win32 {
         export function normalize(p: string): string;
-        export function join(...paths: any[]): string;
-        export function resolve(...pathSegments: any[]): string;
+        export function join(...paths: string[]): string;
+        export function resolve(...pathSegments: string[]): string;
         export function isAbsolute(p: string): boolean;
         export function relative(from: string, to: string): string;
         export function dirname(p: string): string;

@@ -382,6 +382,7 @@ declare namespace NodeJS {
         read(size?: number): string|Buffer;
         setEncoding(encoding: string): void;
         pause(): void;
+        isPaused(): boolean;
         resume(): void;
         pipe<T extends WritableStream>(destination: T, options?: { end?: boolean; }): T;
         unpipe<T extends WritableStream>(destination?: T): void;
@@ -683,14 +684,14 @@ declare module "http" {
         host?: string;
         hostname?: string;
         family?: number;
-        port?: number;
+        port?: number | string;
         localAddress?: string;
         socketPath?: string;
         method?: string;
         path?: string;
         headers?: { [key: string]: any };
         auth?: string;
-        agent?: Agent|boolean;
+        agent?: Agent | boolean;
     }
 
     export interface Server extends events.EventEmitter, net.Server {
@@ -730,7 +731,6 @@ declare module "http" {
         end(buffer: Buffer, cb?: Function): void;
         end(str: string, cb?: Function): void;
         end(str: string, encoding?: string, cb?: Function): void;
-        end(data?: any, encoding?: string): void;
     }
     export interface ClientRequest extends events.EventEmitter, stream.Writable {
         // Extended base methods
@@ -832,8 +832,8 @@ declare module "http" {
     };
     export function createServer(requestListener?: (request: IncomingMessage, response: ServerResponse) =>void ): Server;
     export function createClient(port?: number, host?: string): any;
-    export function request(options: RequestOptions, callback?: (res: IncomingMessage) => void): ClientRequest;
-    export function get(options: any, callback?: (res: IncomingMessage) => void): ClientRequest;
+    export function request(options: string | RequestOptions, callback?: (res: IncomingMessage) => void): ClientRequest;
+    export function get(options: string | RequestOptions, callback?: (res: IncomingMessage) => void): ClientRequest;
     export var globalAgent: Agent;
 }
 
@@ -1030,11 +1030,11 @@ declare module "https" {
     }
 
     export interface RequestOptions extends http.RequestOptions {
-        pfx?: any;
-        key?: any;
+        pfx?: string | Buffer;
+        key?: string | Buffer;
         passphrase?: string;
-        cert?: any;
-        ca?: any;
+        cert?: string | Buffer;
+        ca?: string | Buffer | Array<string | Buffer>;
         ciphers?: string;
         rejectUnauthorized?: boolean;
         secureProtocol?: string;
@@ -1051,8 +1051,8 @@ declare module "https" {
     };
     export interface Server extends tls.Server { }
     export function createServer(options: ServerOptions, requestListener?: Function): Server;
-    export function request(options: RequestOptions, callback?: (res: http.IncomingMessage) =>void ): http.ClientRequest;
-    export function get(options: RequestOptions, callback?: (res: http.IncomingMessage) =>void ): http.ClientRequest;
+    export function request(options: string | RequestOptions, callback?: (res: http.IncomingMessage) =>void ): http.ClientRequest;
+    export function get(options: string | RequestOptions, callback?: (res: http.IncomingMessage) =>void ): http.ClientRequest;
     export var globalAgent: Agent;
 }
 
@@ -1480,7 +1480,8 @@ declare module "dgram" {
     export function createSocket(type: string, callback?: (msg: Buffer, rinfo: RemoteInfo) => void): Socket;
 
     interface Socket extends events.EventEmitter {
-        send(buf: Buffer, offset: number, length: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+        send(msg: Buffer | string | Array<Buffer | string>, offset: number, length: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+        send(msg: Buffer | string | Array<Buffer | string>, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
         bind(port: number, address?: string, callback?: () => void): void;
         close(): void;
         address(): AddressInfo;
@@ -1954,32 +1955,32 @@ declare module "tls" {
 
     export interface TlsOptions {
         host?: string;
-        port?: number;
-        pfx?: any;   //string or buffer
-        key?: any;   //string or buffer
+        port?: string | number;
+        pfx?: string | Buffer;
+        key?: string | Buffer;
         passphrase?: string;
-        cert?: any;
-        ca?: any;    //string or buffer
-        crl?: any;   //string or string array
+        cert?: string | Buffer;
+        ca?: string | Buffer | Array<string | Buffer>;
+        crl?: string | string[];
         ciphers?: string;
         honorCipherOrder?: any;
         requestCert?: boolean;
         rejectUnauthorized?: boolean;
-        NPNProtocols?: any;  //array or Buffer;
+        NPNProtocols?: Array<string | Buffer>;
         SNICallback?: (servername: string) => any;
     }
 
     export interface ConnectionOptions {
         host?: string;
-        port?: number;
+        port?: number | string;
         socket?: net.Socket;
-        pfx?: string | Buffer
-        key?: string | Buffer
+        pfx?: string | Buffer;
+        key?: string | Buffer;
         passphrase?: string;
-        cert?: string | Buffer
-        ca?: (string | Buffer)[];
+        cert?: string | Buffer;
+        ca?: string | Buffer | Array<string | Buffer>;
         rejectUnauthorized?: boolean;
-        NPNProtocols?: (string | Buffer)[];
+        NPNProtocols?: Array<string | Buffer>;
         servername?: string;
     }
 
@@ -2019,11 +2020,11 @@ declare module "tls" {
 
     export interface SecureContextOptions {
         pfx?: string | Buffer;
-        key?: string | Buffer;
+        key?: string | string[] | Buffer | Array<{ pem: string, passphrase: string }>;
         passphrase?: string;
         cert?: string | Buffer;
         ca?: string | Buffer;
-        crl?: string | string[]
+        crl?: string | string[];
         ciphers?: string;
         honorCipherOrder?: boolean;
     }
@@ -2155,6 +2156,7 @@ declare module "stream" {
         read(size?: number): any;
         setEncoding(encoding: string): void;
         pause(): void;
+        isPaused(): boolean;
         resume(): void;
         pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
         unpipe<T extends NodeJS.WritableStream>(destination?: T): void;
@@ -2208,6 +2210,7 @@ declare module "stream" {
         read(size?: number): any;
         setEncoding(encoding: string): void;
         pause(): void;
+        isPaused(): boolean;
         resume(): void;
         pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
         unpipe<T extends NodeJS.WritableStream>(destination?: T): void;

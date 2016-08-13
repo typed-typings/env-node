@@ -420,6 +420,12 @@ var ds: dgram.Socket = dgram.createSocket("udp4", (msg: Buffer, rinfo: dgram.Rem
 var ai: dgram.AddressInfo = ds.address();
 ds.send(new Buffer("hello"), 0, 5, 5000, "127.0.0.1", (error: Error, bytes: number): void => {
 });
+ds.send(new Buffer("hello"), 5000, "127.0.0.1", (error: Error, bytes: number): void => {
+});
+ds.send("hello", 0, 5, 5000, "127.0.0.1", (error: Error, bytes: number): void => {
+});
+ds.send("hello", 5000, "127.0.0.1", (error: Error, bytes: number): void => {
+});
 
 ////////////////////////////////////////////////////
 ///Querystring tests : https://nodejs.org/api/querystring.html

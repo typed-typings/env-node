@@ -265,6 +265,55 @@ declare module "http" {
     import net = require("net");
     import stream = require("stream");
 
+    /**
+     * Options for http.request()
+    */
+    export interface RequestOptions {
+        /**
+         * A domain name or IP address of the server to issue the request to. Defaults to 'localhost'.
+         */
+        host?: string;
+        /**
+         * To support url.parse() hostname is preferred over host
+         */
+        hostname?: string;
+        /**
+         * Port of remote server. Defaults to 80.
+         */
+        port?: number | string;
+        /**
+         * Local interface to bind for network connections.
+         */
+        localAddress?: string;
+        /**
+         * Unix Domain Socket (use one of host:port or socketPath)
+         */
+        socketPath?: string;
+        /**
+         * A string specifying the HTTP request method. Defaults to 'GET'.
+         */
+        method?: string;
+        /**
+         * Request path. Defaults to '/'. Should include query string if any. E.G. '/index.html?page=12'
+         */
+        path?: string;
+        /**
+         * An object containing request headers.
+         */
+        headers?: { [index: string]: any };
+        /**
+         * Basic authentication i.e. 'user:password' to compute an Authorization header.
+         */
+        auth?: string;
+        /**
+         * Controls Agent behavior. When an Agent is used request will default to Connection: keep-alive. Possible values:
+         * - undefined (default): use global Agent for this host and port.
+         * - Agent object: explicitly use the passed in Agent.
+         * - false: opts out of connection pooling with an Agent, defaults request to Connection: close.
+         */
+        agent?: Agent | boolean;
+    }
+
     export interface Server extends EventEmitter {
         listen(port: number, hostname?: string, backlog?: number, callback?: Function): void;
         listen(path: string, callback?: Function): void;
@@ -281,7 +330,7 @@ declare module "http" {
         setEncoding(encoding?: string): void;
         pause(): void;
         resume(): void;
-        connection: net.NodeSocket;
+        connection: net.Socket;
     }
     export interface ServerResponse extends EventEmitter, stream.WritableStream {
         // Extended base methods
@@ -329,8 +378,8 @@ declare module "http" {
     export var STATUS_CODES: {[code: number]: string};
     export function createServer(requestListener?: (request: ServerRequest, response: ServerResponse) =>void ): Server;
     export function createClient(port?: number, host?: string): any;
-    export function request(options: any, callback?: Function): ClientRequest;
-    export function get(options: any, callback?: Function): ClientRequest;
+    export function request(options: string | RequestOptions, callback?: Function): ClientRequest;
+    export function get(options: string | RequestOptions, callback?: Function): ClientRequest;
     export var globalAgent: Agent;
 }
 
@@ -465,37 +514,29 @@ declare module "https" {
         SNICallback?: (servername: string) => any;
     }
 
-    export interface RequestOptions {
-        host?: string;
-        hostname?: string;
-        port?: number;
-        path?: string;
-        method?: string;
-        headers?: any;
-        auth?: string;
-        agent?: any;
-        pfx?: any;
-        key?: any;
+    export interface RequestOptions extends http.RequestOptions {
+        pfx?: string | Buffer;
+        key?: string | Buffer;
         passphrase?: string;
-        cert?: any;
-        ca?: any;
+        cert?: string | Buffer;
+        ca?: string | Buffer | Array<string | Buffer>;
         ciphers?: string;
         rejectUnauthorized?: boolean;
     }
 
-    export interface NodeAgent {
+    export interface Agent {
         maxSockets: number;
         sockets: any;
         requests: any;
     }
     export var Agent: {
-        new (options?: RequestOptions): NodeAgent;
+        new (options?: RequestOptions): Agent;
     };
     export interface Server extends tls.Server { }
     export function createServer(options: ServerOptions, requestListener?: Function): Server;
-    export function request(options: RequestOptions, callback?: (res: EventEmitter) =>void ): http.ClientRequest;
-    export function get(options: RequestOptions, callback?: (res: EventEmitter) =>void ): http.ClientRequest;
-    export var globalAgent: NodeAgent;
+    export function request(options: string | RequestOptions, callback?: (res: EventEmitter) =>void ): http.ClientRequest;
+    export function get(options: string | RequestOptions, callback?: (res: EventEmitter) =>void ): http.ClientRequest;
+    export var globalAgent: Agent;
 }
 
 declare module "punycode" {
@@ -660,7 +701,7 @@ declare module "dns" {
 declare module "net" {
     import stream = require("stream");
 
-    export interface NodeSocket extends stream.ReadWriteStream {
+    export interface Socket extends stream.ReadWriteStream {
         // Extended base methods
         write(str: string, encoding?: string, fd?: string): boolean;
         write(buffer: Buffer): boolean;
@@ -685,10 +726,10 @@ declare module "net" {
     }
 
     export var Socket: {
-        new (options?: { fd?: string; type?: string; allowHalfOpen?: boolean; }): NodeSocket;
+        new (options?: { fd?: string; type?: string; allowHalfOpen?: boolean; }): Socket;
     };
 
-    export interface Server extends NodeSocket {
+    export interface Server extends Socket {
         listen(port: number, host?: string, backlog?: number, listeningListener?: Function): void;
         listen(path: string, listeningListener?: Function): void;
         listen(handle: any, listeningListener?: Function): void;
@@ -697,8 +738,8 @@ declare module "net" {
         maxConnections: number;
         connections: number;
     }
-    export function createServer(connectionListener?: (socket: NodeSocket) =>void ): Server;
-    export function createServer(options?: { allowHalfOpen?: boolean; }, connectionListener?: (socket: NodeSocket) =>void ): Server;
+    export function createServer(connectionListener?: (socket: Socket) =>void ): Server;
+    export function createServer(options?: { allowHalfOpen?: boolean; }, connectionListener?: (socket: Socket) =>void ): Server;
     export function connect(options: { allowHalfOpen?: boolean; }, connectionListener?: Function): void;
     export function connect(port: number, host?: string, connectionListener?: Function): void;
     export function connect(path: string, connectionListener?: Function): void;
@@ -882,31 +923,31 @@ declare module "tls" {
     var CLIENT_RENEG_WINDOW: number;
 
     export interface TlsOptions {
-        pfx?: any;   //string or buffer
-        key?: any;   //string or buffer
+        pfx?: string | Buffer;
+        key?: string | Buffer;
         passphrase?: string;
-        cert?: any;
-        ca?: any;    //string or buffer
-        crl?: any;   //string or string array
+        cert?: string | Buffer;
+        ca?: string | Buffer | Array<string | Buffer>;
+        crl?: string | string[];
         ciphers?: string;
         honorCipherOrder?: any;
         requestCert?: boolean;
         rejectUnauthorized?: boolean;
-        NPNProtocols?: any;  //array or Buffer;
+        NPNProtocols?: Array<string | Buffer>;
         SNICallback?: (servername: string) => any;
     }
 
     export interface ConnectionOptions {
         host?: string;
-        port?: number;
-        socket?: net.NodeSocket;
-        pfx?: any;   //string | Buffer
-        key?: any;   //string | Buffer
+        port?: number | string;
+        socket?: net.Socket;
+        pfx?: string | Buffer;
+        key?: string | Buffer;
         passphrase?: string;
-        cert?: any;  //string | Buffer
-        ca?: any;    //Array of string | Buffer
+        cert?: string | Buffer;
+        ca?: string | Buffer | Array<string | Buffer>;
         rejectUnauthorized?: boolean;
-        NPNProtocols?: any;  //Array of string | Buffer
+        NPNProtocols?: Array<string | Buffer>;
         servername?: string;
     }
 
@@ -1087,11 +1128,11 @@ declare module "tty" {
     import net = require("net");
 
     export function isatty(fd: string): boolean;
-    export interface ReadStream extends net.NodeSocket {
+    export interface ReadStream extends net.Socket {
         isRaw: boolean;
         setRawMode(mode: boolean): void;
     }
-    export interface WriteStream extends net.NodeSocket {
+    export interface WriteStream extends net.Socket {
         columns: number;
         rows: number;
     }

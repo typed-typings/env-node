@@ -291,6 +291,55 @@ declare module "http" {
     import net = require("net");
     import stream = require("stream");
 
+    /**
+     * Options for http.request()
+    */
+    export interface RequestOptions {
+        /**
+         * A domain name or IP address of the server to issue the request to. Defaults to 'localhost'.
+         */
+        host?: string;
+        /**
+         * To support url.parse() hostname is preferred over host
+         */
+        hostname?: string;
+        /**
+         * Port of remote server. Defaults to 80.
+         */
+        port?: number | string;
+        /**
+         * Local interface to bind for network connections.
+         */
+        localAddress?: string;
+        /**
+         * Unix Domain Socket (use one of host:port or socketPath)
+         */
+        socketPath?: string;
+        /**
+         * A string specifying the HTTP request method. Defaults to 'GET'.
+         */
+        method?: string;
+        /**
+         * Request path. Defaults to '/'. Should include query string if any. E.G. '/index.html?page=12'
+         */
+        path?: string;
+        /**
+         * An object containing request headers.
+         */
+        headers?: { [index: string]: any };
+        /**
+         * Basic authentication i.e. 'user:password' to compute an Authorization header.
+         */
+        auth?: string;
+        /**
+         * Controls Agent behavior. When an Agent is used request will default to Connection: keep-alive. Possible values:
+         * - undefined (default): use global Agent for this host and port.
+         * - Agent object: explicitly use the passed in Agent.
+         * - false: opts out of connection pooling with an Agent, defaults request to Connection: close.
+         */
+        agent?: Agent | boolean;
+    }
+
     export interface Server extends events.EventEmitter {
         listen(port: number, hostname?: string, backlog?: number, callback?: Function): Server;
         listen(path: string, callback?: Function): Server;
@@ -334,7 +383,6 @@ declare module "http" {
         end(buffer: Buffer, cb?: Function): void;
         end(str: string, cb?: Function): void;
         end(str: string, encoding?: string, cb?: Function): void;
-        end(data?: any, encoding?: string): void;
     }
     export interface ClientRequest extends events.EventEmitter, stream.Writable {
         // Extended base methods
@@ -374,8 +422,8 @@ declare module "http" {
     };
     export function createServer(requestListener?: (request: ServerRequest, response: ServerResponse) =>void ): Server;
     export function createClient(port?: number, host?: string): any;
-    export function request(options: any, callback?: Function): ClientRequest;
-    export function get(options: any, callback?: Function): ClientRequest;
+    export function request(options: string | RequestOptions, callback?: Function): ClientRequest;
+    export function get(options: string | RequestOptions, callback?: Function): ClientRequest;
     export var globalAgent: Agent;
 }
 
@@ -518,20 +566,12 @@ declare module "https" {
         SNICallback?: (servername: string) => any;
     }
 
-    export interface RequestOptions {
-        host?: string;
-        hostname?: string;
-        port?: number;
-        path?: string;
-        method?: string;
-        headers?: any;
-        auth?: string;
-        agent?: any;
-        pfx?: any;
-        key?: any;
+    export interface RequestOptions extends http.RequestOptions {
+        pfx?: string | Buffer;
+        key?: string | Buffer;
         passphrase?: string;
-        cert?: any;
-        ca?: any;
+        cert?: string | Buffer;
+        ca?: string | Buffer | Array<string | Buffer>;
         ciphers?: string;
         rejectUnauthorized?: boolean;
     }
@@ -546,8 +586,8 @@ declare module "https" {
     };
     export interface Server extends tls.Server { }
     export function createServer(options: ServerOptions, requestListener?: Function): Server;
-    export function request(options: RequestOptions, callback?: (res: events.EventEmitter) =>void ): http.ClientRequest;
-    export function get(options: RequestOptions, callback?: (res: events.EventEmitter) =>void ): http.ClientRequest;
+    export function request(options: string | RequestOptions, callback?: (res: events.EventEmitter) =>void ): http.ClientRequest;
+    export function get(options: string | RequestOptions, callback?: (res: events.EventEmitter) =>void ): http.ClientRequest;
     export var globalAgent: Agent;
 }
 
@@ -676,7 +716,7 @@ declare module "url" {
         host?: string;
         pathname?: string;
         search?: string;
-        query?: any; // string | Object
+        query?: string | any;
         slashes?: boolean;
         hash?: string;
         path?: string;
@@ -976,31 +1016,31 @@ declare module "tls" {
     var CLIENT_RENEG_WINDOW: number;
 
     export interface TlsOptions {
-        pfx?: any;   //string or buffer
-        key?: any;   //string or buffer
+        pfx?: string | Buffer;
+        key?: string | Buffer;
         passphrase?: string;
-        cert?: any;
-        ca?: any;    //string or buffer
-        crl?: any;   //string or string array
+        cert?: string | Buffer;
+        ca?: string | Buffer | Array<string | Buffer>;
+        crl?: string | string[];
         ciphers?: string;
         honorCipherOrder?: any;
         requestCert?: boolean;
         rejectUnauthorized?: boolean;
-        NPNProtocols?: any;  //array or Buffer;
+        NPNProtocols?: Array<string | Buffer>;
         SNICallback?: (servername: string) => any;
     }
 
     export interface ConnectionOptions {
         host?: string;
-        port?: number;
+        port?: number | string;
         socket?: net.Socket;
-        pfx?: any;   //string | Buffer
-        key?: any;   //string | Buffer
+        pfx?: string | Buffer;
+        key?: string | Buffer;
         passphrase?: string;
-        cert?: any;  //string | Buffer
-        ca?: any;    //Array of string | Buffer
+        cert?: string | Buffer;
+        ca?: string | Buffer | Array<string | Buffer>;
         rejectUnauthorized?: boolean;
-        NPNProtocols?: any;  //Array of string | Buffer
+        NPNProtocols?: Array<string | Buffer>;
         servername?: string;
     }
 

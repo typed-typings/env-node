@@ -9,7 +9,7 @@
 *                                               *
 ************************************************/
 
-interface Error {
+interface NodeError {
   /**
    * Returns a string describing the point in the code at which the Error was instantiated.
    *
@@ -36,8 +36,9 @@ interface Error {
    * // Prints: The message
    * ```
    */
-  // message: string;
+  message: string;
 }
+interface Error extends NodeError {}
 
 interface ErrorConstructor {
   /**

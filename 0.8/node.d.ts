@@ -154,6 +154,10 @@ interface NodeProcess extends EventEmitter {
     stderr: WritableStream;
     stdin: ReadableStream;
     argv: string[];
+    /**
+     * The process.execArgv property returns the set of Node.js-specific command-line options passed when the Node.js process was launched. These options do not appear in the array returned by the process.argv property, and do not include the Node.js executable, the name of the script, or any options following the script name. These options are useful in order to spawn child processes with the same execution environment as the parent.
+     */
+    execArgv: string[];
     execPath: string;
     abort(): void;
     chdir(directory: string): void;
@@ -1158,4 +1162,21 @@ declare module "domain" {
     export function bind(cb: (er: Error, data: any) =>any): any;
     export function intercept(cb: (data: any) => any): any;
     export function dispose(): void;
+}
+
+declare module "module" {
+  class Module {
+    static runMain (): void
+    static wrap (code: string): string
+    static _nodeModulePaths (path: string): string[]
+
+    constructor (filename: string)
+
+    filename: string
+    paths: string[]
+    exports: any
+    require (module: string): any
+  }
+
+  export = Module
 }

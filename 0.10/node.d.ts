@@ -1414,7 +1414,7 @@ declare module "domain" {
     export function create(): Domain;
 }
 
-declare module 'module' {
+declare module "module" {
   class Module {
     static runMain (): void
     static wrap (code: string): string

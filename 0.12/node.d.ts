@@ -2168,7 +2168,7 @@ declare module "constants" {
     export var UV_UDP_REUSEADDR: number;
 }
 
-declare module 'module' {
+declare module "module" {
   class Module {
     static runMain (): void
     static wrap (code: string): string

@@ -1164,7 +1164,7 @@ declare module "domain" {
     export function dispose(): void;
 }
 
-declare module 'module' {
+declare module "module" {
   class Module {
     static runMain (): void
     static wrap (code: string): string

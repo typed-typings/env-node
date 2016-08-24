@@ -27,23 +27,30 @@ declare function clearInterval(intervalId: NodeJS.Timer): void;
 declare function setImmediate(callback: (...args: any[]) => void, ...args: any[]): any;
 declare function clearImmediate(immediateId: any): void;
 
-declare var require: {
+interface NodeRequireFunction {
     (id: string): any;
-    resolve(id:string): string;
-    cache: any;
-    extensions: any;
-    main: any;
-};
+}
 
-declare var module: {
+interface NodeRequire extends NodeRequireFunction {
+    resolve (id: string): string;
+    cache: { [filename: string]: NodeModule };
+    extensions: { [ext: string]: (m: NodeModule, filename: string) => any };
+    main: any;
+}
+
+declare var require: NodeRequire;
+
+interface NodeModule {
     exports: any;
-    require(id: string): any;
+    require: NodeRequireFunction;
     id: string;
     filename: string;
+    parent: NodeModule;
     loaded: boolean;
-    parent: any;
-    children: any[];
-};
+    children: NodeModule[];
+}
+
+declare var module: NodeModule;
 
 // Same as module.exports
 declare var exports: any;
@@ -1415,18 +1422,25 @@ declare module "domain" {
 }
 
 declare module "module" {
-  class Module {
-    static runMain (): void
-    static wrap (code: string): string
-    static _nodeModulePaths (path: string): string[]
+    class Module implements NodeModule {
+        static runMain (): void;
+        static wrap (code: string): string;
+        static _nodeModulePaths (path: string): string[];
+        static _load (request: string, parent?: Module, isMain?: boolean): any;
+        static _resolveFilename (request: string, parent?: Module, isMain?: boolean): string;
+        static _extensions: { [ext: string]: (m: Module, fileName: string) => any }
 
-    constructor (filename: string)
+        constructor (filename: string);
 
-    filename: string
-    paths: string[]
-    exports: any
-    require (module: string): any
-  }
+        id: string;
+        parent: Module;
+        filename: string;
+        paths: string[];
+        children: Module[];
+        exports: any;
+        loaded: boolean;
+        require: NodeRequireFunction;
+    }
 
-  export = Module
+    export = Module;
 }

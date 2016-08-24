@@ -305,6 +305,22 @@ declare var Buffer: {
      */
     from(buffer: Buffer): Buffer;
     /**
+     * Allocates a new `Buffer` of `size` bytes. If `fill` is `undefined`, the `Buffer` will be _zero-filled_.
+     *
+     * @param size The desired length of the new `Buffer`
+     * @param fill A value to pre-fill the new `Buffer` with. Default: `0`
+     * @param encoding If `fill` is a string, this is its encoding. Default: `'utf8'`
+     */
+    alloc(size: number, fill?: string | Buffer | number, encoding?: string): Buffer;
+    /**
+     * Allocates a new _non-zero-filled_ `Buffer` of `size` bytes. The `size` must be less than or equal to the value of `buffer.kMaxLength`. Otherwise, a `RangeError` is thrown. A zero-length `Buffer` will be created if `size <= 0`.
+     *
+     * The underlying memory for `Buffer` instances created in this way is not initialized. The contents of the newly created `Buffer` are unknown and _may contain sensitive data_. Use `buf.fill(0)` to initialize such `Buffer` instances to zeroes.
+     *
+     * @param size The desired length of the new `Buffer`
+     */
+    allocUnsafe(size: number): Buffer;
+    /**
      * Creates a new Buffer containing the given JavaScript string {str}.
      * If provided, the {encoding} parameter identifies the character encoding.
      * If not provided, {encoding} defaults to 'utf8'.
@@ -432,6 +448,7 @@ declare namespace NodeJS {
         stderr: WritableStream;
         stdin: ReadableStream;
         argv: string[];
+        argv0: string;
         /**
          * The process.execArgv property returns the set of Node.js-specific command-line options passed when the Node.js process was launched. These options do not appear in the array returned by the process.argv property, and do not include the Node.js executable, the name of the script, or any options following the script name. These options are useful in order to spawn child processes with the same execution environment as the parent.
          */
@@ -637,6 +654,7 @@ interface NodeBuffer extends Uint8Array {
 ************************************************/
 declare module "buffer" {
     export var INSPECT_MAX_BYTES: number;
+    export var kMaxLength: number;
     var BuffType: typeof Buffer;
     var SlowBuffType: typeof SlowBuffer;
     export { BuffType as Buffer, SlowBuffType as SlowBuffer };

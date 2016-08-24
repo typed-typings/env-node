@@ -637,6 +637,7 @@ interface NodeBuffer extends Uint8Array {
 ************************************************/
 declare module "buffer" {
     export var INSPECT_MAX_BYTES: number;
+    export var kMaxLength: number;
     var BuffType: typeof Buffer;
     var SlowBuffType: typeof SlowBuffer;
     export { BuffType as Buffer, SlowBuffType as SlowBuffer };

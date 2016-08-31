@@ -828,4 +828,4 @@ class CustomError extends Error {
 
 new CustomError().stack;
 
-Error.stackTraceLimit(10);
+Error.stackTraceLimit = 10;

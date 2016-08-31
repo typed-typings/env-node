@@ -76,7 +76,7 @@ interface ErrorConstructor {
    *
    * If set to a non-number value, or set to a negative number, stack traces will not capture any frames.
    */
-  stackTraceLimit(limit: number): void;
+  stackTraceLimit: number;
 }
 
 // ES2015 collection types

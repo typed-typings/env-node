@@ -684,11 +684,11 @@ declare module "http" {
     import * as net from "net";
     import * as stream from "stream";
 
-    export interface RequestHeaders {
+    export interface OutgoingHeaders {
       [header: string]: number | string | string[];
     }
 
-    export interface ResponseHeaders {
+    export interface IncomingHeaders {
       [header: string]: string | string[];
     }
 
@@ -702,7 +702,7 @@ declare module "http" {
         socketPath?: string;
         method?: string;
         path?: string;
-        headers?: RequestHeaders;
+        headers?: OutgoingHeaders;
         auth?: string;
         agent?: Agent | boolean;
     }
@@ -712,12 +712,7 @@ declare module "http" {
         maxHeadersCount: number;
         timeout: number;
     }
-    /**
-     * @deprecated Use IncomingMessage
-     */
-    export interface ServerRequest extends IncomingMessage {
-        connection: net.Socket;
-    }
+
     export interface ServerResponse extends events.EventEmitter, stream.Writable {
         // Extended base methods
         write(buffer: Buffer): boolean;
@@ -727,8 +722,8 @@ declare module "http" {
         write(str: string, encoding?: string, fd?: string): boolean;
 
         writeContinue(): void;
-        writeHead(statusCode: number, statusText?: string, headers?: RequestHeaders): void;
-        writeHead(statusCode: number, headers?: RequestHeaders): void;
+        writeHead(statusCode: number, statusText?: string, headers?: OutgoingHeaders): void;
+        writeHead(statusCode: number, headers?: OutgoingHeaders): void;
         statusCode: number;
         statusMessage: string;
         headersSent: boolean;
@@ -737,7 +732,7 @@ declare module "http" {
         getHeader(name: string): string;
         removeHeader(name: string): void;
         write(chunk: any, encoding?: string): any;
-        addTrailers(headers: RequestHeaders): void;
+        addTrailers(headers: OutgoingHeaders): void;
 
         // Extended base methods
         end(): void;
@@ -745,6 +740,7 @@ declare module "http" {
         end(str: string, cb?: Function): void;
         end(str: string, encoding?: string, cb?: Function): void;
     }
+
     export interface ClientRequest extends events.EventEmitter, stream.Writable {
         // Extended base methods
         write(buffer: Buffer): boolean;
@@ -762,7 +758,7 @@ declare module "http" {
         setHeader(name: string, value: string | string[]): void;
         getHeader(name: string): string;
         removeHeader(name: string): void;
-        addTrailers(headers: RequestHeaders): void;
+        addTrailers(headers: OutgoingHeaders): void;
 
         // Extended base methods
         end(): void;
@@ -771,13 +767,14 @@ declare module "http" {
         end(str: string, encoding?: string, cb?: Function): void;
         end(data?: any, encoding?: string): void;
     }
+
     export interface IncomingMessage extends events.EventEmitter, stream.Readable {
         httpVersion: string;
         httpVersionMajor: number;
         httpVersionMinor: number;
-        headers: ResponseHeaders;
+        headers: IncomingHeaders;
         rawHeaders: string[];
-        trailers: ResponseHeaders;
+        trailers: IncomingHeaders;
         rawTrailers: string[];
         setTimeout(msecs: number, callback: Function): NodeJS.Timer;
         /**
@@ -798,10 +795,6 @@ declare module "http" {
         statusMessage?: string;
         socket: net.Socket;
     }
-    /**
-     * @deprecated Use IncomingMessage
-     */
-    export interface ClientResponse extends IncomingMessage { }
 
     export interface AgentOptions {
         /**

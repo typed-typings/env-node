@@ -302,11 +302,11 @@ declare module "http" {
     import net = require("net");
     import stream = require("stream");
 
-    export interface RequestHeaders {
+    export interface OutgoingHeaders {
       [header: string]: number | string | string[];
     }
 
-    export interface ResponseHeaders {
+    export interface IncomingHeaders {
       [header: string]: string | string[];
     }
 
@@ -345,7 +345,7 @@ declare module "http" {
         /**
          * An object containing request headers.
          */
-        headers?: RequestHeaders;
+        headers?: OutgoingHeaders;
         /**
          * Basic authentication i.e. 'user:password' to compute an Authorization header.
          */
@@ -367,17 +367,31 @@ declare module "http" {
         address(): { port: number; family: string; address: string; };
         maxHeadersCount: number;
     }
-    export interface ServerRequest extends events.EventEmitter, stream.Readable {
-        method: string;
-        url: string;
-        headers: ResponseHeaders;
-        trailers: ResponseHeaders;
+
+    export interface IncomingMessage extends events.EventEmitter, stream.Readable {
         httpVersion: string;
-        setEncoding(encoding?: string): void;
-        pause(): void;
-        resume(): void;
-        connection: net.Socket;
+        headers: IncomingHeaders;
+        trailers: IncomingHeaders;
+        setTimeout(msecs: number, callback: Function): NodeJS.Timer;
+        /**
+         * Only valid for request obtained from http.Server.
+         */
+        method?: string;
+        /**
+         * Only valid for request obtained from http.Server.
+         */
+        url?: string;
+        /**
+         * Only valid for response obtained from http.ClientRequest.
+         */
+        statusCode?: number;
+        /**
+         * Only valid for response obtained from http.ClientRequest.
+         */
+        statusMessage?: string;
+        socket: net.Socket;
     }
+
     export interface ServerResponse extends events.EventEmitter, stream.Writable {
         // Extended base methods
         write(buffer: Buffer): boolean;
@@ -387,15 +401,15 @@ declare module "http" {
         write(str: string, encoding?: string, fd?: string): boolean;
 
         writeContinue(): void;
-        writeHead(statusCode: number, statusText?: string, headers?: RequestHeaders): void;
-        writeHead(statusCode: number, headers?: RequestHeaders): void;
+        writeHead(statusCode: number, statusText?: string, headers?: OutgoingHeaders): void;
+        writeHead(statusCode: number, headers?: OutgoingHeaders): void;
         statusCode: number;
         setHeader(name: string, value: string): void;
         sendDate: boolean;
         getHeader(name: string): string;
         removeHeader(name: string): void;
         write(chunk: any, encoding?: string): any;
-        addTrailers(headers: RequestHeaders): void;
+        addTrailers(headers: OutgoingHeaders): void;
 
         // Extended base methods
         end(): void;
@@ -403,6 +417,7 @@ declare module "http" {
         end(str: string, cb?: Function): void;
         end(str: string, encoding?: string, cb?: Function): void;
     }
+
     export interface ClientRequest extends events.EventEmitter, stream.Writable {
         // Extended base methods
         write(buffer: Buffer): boolean;
@@ -424,25 +439,17 @@ declare module "http" {
         end(str: string, encoding?: string, cb?: Function): void;
         end(data?: any, encoding?: string): void;
     }
-    export interface ClientResponse extends events.EventEmitter, stream.Readable {
-        statusCode: number;
-        httpVersion: string;
-        headers: ResponseHeaders;
-        trailers: ResponseHeaders;
-        setEncoding(encoding?: string): void;
-        pause(): void;
-        resume(): void;
-    }
+
     export interface Agent { maxSockets: number; sockets: any; requests: any; }
 
     export var STATUS_CODES: {
         [errorCode: number]: string;
         [errorCode: string]: string;
     };
-    export function createServer(requestListener?: (request: ServerRequest, response: ServerResponse) =>void ): Server;
+    export function createServer(requestListener?: (request: IncomingMessage, response: ServerResponse) =>void ): Server;
     export function createClient(port?: number, host?: string): any;
-    export function request(options: string | RequestOptions, callback?: Function): ClientRequest;
-    export function get(options: string | RequestOptions, callback?: Function): ClientRequest;
+    export function request(options: string | RequestOptions, callback?: (response: IncomingMessage) => void): ClientRequest;
+    export function get(options: string | RequestOptions, callback?: (response: IncomingMessage) => void): ClientRequest;
     export var globalAgent: Agent;
 }
 

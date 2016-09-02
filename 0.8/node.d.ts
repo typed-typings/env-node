@@ -341,17 +341,33 @@ declare module "http" {
         close(cb?: any): void;
         maxHeadersCount: number;
     }
-    export interface ServerRequest extends EventEmitter, stream.ReadableStream {
-        method: string;
-        url: string;
-        headers: ResponseHeaders;
-        trailers: ResponseHeaders;
+
+    export interface IncomingMessage extends EventEmitter, stream.ReadableStream {
         httpVersion: string;
-        setEncoding(encoding?: string): void;
-        pause(): void;
-        resume(): void;
-        connection: net.Socket;
+        headers: ResponseHeaders;
+        rawHeaders: string[];
+        trailers: ResponseHeaders;
+        rawTrailers: string[];
+        setTimeout(msecs: number, callback: Function): NodeJS.Timer;
+        /**
+         * Only valid for request obtained from http.Server.
+         */
+        method?: string;
+        /**
+         * Only valid for request obtained from http.Server.
+         */
+        url?: string;
+        /**
+         * Only valid for response obtained from http.ClientRequest.
+         */
+        statusCode?: number;
+        /**
+         * Only valid for response obtained from http.ClientRequest.
+         */
+        statusMessage?: string;
+        socket: net.Socket;
     }
+
     export interface ServerResponse extends EventEmitter, stream.WritableStream {
         // Extended base methods
         write(str: string, encoding?: string, fd?: string): boolean;
@@ -369,6 +385,7 @@ declare module "http" {
         addTrailers(headers: RequestHeaders): void;
         end(data?: any, encoding?: string): void;
     }
+
     export interface ClientRequest extends EventEmitter, stream.WritableStream {
         // Extended base methods
         write(str: string, encoding?: string, fd?: string): boolean;
@@ -381,25 +398,17 @@ declare module "http" {
         setNoDelay(noDelay?: Function): void;
         setSocketKeepAlive(enable?: boolean, initialDelay?: number): void;
     }
-    export interface ClientResponse extends EventEmitter, stream.ReadableStream {
-        statusCode: number;
-        httpVersion: string;
-        headers: ResponseHeaders;
-        trailers: ResponseHeaders;
-        setEncoding(encoding?: string): void;
-        pause(): void;
-        resume(): void;
-    }
+
     export interface Agent { maxSockets: number; sockets: any; requests: any; }
 
     /**
      * A collection of all the standard HTTP response status codes, and the short description of each. For example, http.STATUS_CODES[404] === 'Not Found'.
      */
     export var STATUS_CODES: {[code: number]: string};
-    export function createServer(requestListener?: (request: ServerRequest, response: ServerResponse) => void): Server;
+    export function createServer(requestListener?: (request: IncomingMessage, response: ServerResponse) => void): Server;
     export function createClient(port?: number, host?: string): any;
-    export function request(options: string | RequestOptions, callback?: Function): ClientRequest;
-    export function get(options: string | RequestOptions, callback?: Function): ClientRequest;
+    export function request(options: string | RequestOptions, callback?: (res: IncomingMessage) => void): ClientRequest;
+    export function get(options: string | RequestOptions, callback?: (res: IncomingMessage) => void): ClientRequest;
     export var globalAgent: Agent;
 }
 

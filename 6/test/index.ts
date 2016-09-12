@@ -367,6 +367,8 @@ namespace http_tests {
     http.request({
         agent: undefined
     });
+
+    var listening: boolean = http.createServer().listening;
 }
 
 ////////////////////////////////////////////////////

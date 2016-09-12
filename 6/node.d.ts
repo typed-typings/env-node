@@ -729,6 +729,7 @@ declare module "http" {
         setTimeout(msecs: number, callback: Function): void;
         maxHeadersCount: number;
         timeout: number;
+        listening: boolean;
     }
 
     export interface ServerResponse extends events.EventEmitter, stream.Writable {

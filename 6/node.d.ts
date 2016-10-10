@@ -1166,6 +1166,7 @@ declare module "readline" {
 
 declare module "vm" {
     export interface Context { }
+
     export interface ScriptOptions {
         filename?: string;
         lineOffset?: number;
@@ -1175,25 +1176,36 @@ declare module "vm" {
         cachedData?: Buffer;
         produceCachedData?: boolean;
     }
-    export interface RunningScriptOptions {
+
+    export interface RunInNewContextOptions {
         filename?: string;
         lineOffset?: number;
         columnOffset?: number;
         displayErrors?: boolean;
         timeout?: number;
     }
+
+    export interface RunInContextOptions extends RunInNewContextOptions {
+        breakOnSigint?: boolean;
+    }
+
     export class Script {
         constructor(code: string, options?: ScriptOptions);
-        runInContext(contextifiedSandbox: Context, options?: RunningScriptOptions): any;
-        runInNewContext(sandbox?: Context, options?: RunningScriptOptions): any;
-        runInThisContext(options?: RunningScriptOptions): any;
+        runInContext(contextifiedSandbox: Context, options?: RunInContextOptions): any;
+        runInNewContext(sandbox?: Context, options?: RunInNewContextOptions): any;
+        runInThisContext(options?: RunInNewContextOptions): any;
     }
+
     export function createContext(sandbox?: Context): Context;
     export function isContext(sandbox: Context): boolean;
-    export function runInContext(code: string, contextifiedSandbox: Context, options?: RunningScriptOptions): any;
+    export function runInContext(code: string, contextifiedSandbox: Context, options?: RunInNewContextOptions): any;
     export function runInDebugContext(code: string): any;
-    export function runInNewContext(code: string, sandbox?: Context, options?: RunningScriptOptions): any;
-    export function runInThisContext(code: string, options?: RunningScriptOptions): any;
+    export function runInNewContext(code: string, sandbox?: Context, options?: RunInNewContextOptions): any;
+    export function runInThisContext(code: string, options?: RunInNewContextOptions): any;
+    /**
+     * @deprecated
+     */
+    export function createScript(code: string, filename?: string): Script;
 }
 
 declare module "child_process" {
@@ -2252,7 +2264,7 @@ declare module "stream" {
 declare module "util" {
     export interface InspectOptions {
         showHidden?: boolean;
-        depth?: number;
+        depth?: number | null;
         colors?: boolean;
         customInspect?: boolean;
     }
@@ -2263,7 +2275,7 @@ declare module "util" {
     export function puts(...param: any[]): void;
     export function print(...param: any[]): void;
     export function log(string: string): void;
-    export function inspect(object: any, showHidden?: boolean, depth?: number, color?: boolean): string;
+    export function inspect(object: any, showHidden?: boolean, depth?: number | null, color?: boolean): string;
     export function inspect(object: any, options: InspectOptions): string;
     export function isArray(object: any): boolean;
     export function isRegExp(object: any): boolean;
@@ -2585,6 +2597,7 @@ declare module "module" {
         static _extensions: { [ext: string]: (m: Module, fileName: string) => any }
 
         constructor (filename: string);
+        _compile (m: Module, filename: string): string;
 
         id: string;
         parent: Module;

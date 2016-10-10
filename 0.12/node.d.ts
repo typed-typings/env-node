@@ -904,14 +904,17 @@ declare module "readline" {
 }
 
 declare module "vm" {
-    export interface Context { }
-    export interface Script {
+    export interface Context {}
+
+    export class Script {
+        constructor (code: string, filename?: string);
         runInThisContext(): void;
         runInNewContext(sandbox?: Context): void;
     }
+
     export function runInThisContext(code: string, filename?: string): void;
     export function runInNewContext(code: string, sandbox?: Context, filename?: string): void;
-    export function runInContext(code: string, context: Context, filename?: string): void;
+    export function runInContext(code: string, context: Context, filename?: string): any;
     export function createContext(initSandbox?: Context): Context;
     export function createScript(code: string, filename?: string): Script;
 }
@@ -1849,7 +1852,7 @@ declare module "stream" {
 declare module "util" {
     export interface InspectOptions {
         showHidden?: boolean;
-        depth?: number;
+        depth?: number | null;
         colors?: boolean;
         customInspect?: boolean;
     }
@@ -1860,7 +1863,7 @@ declare module "util" {
     export function puts(...param: any[]): void;
     export function print(...param: any[]): void;
     export function log(string: string): void;
-    export function inspect(object: any, showHidden?: boolean, depth?: number, color?: boolean): string;
+    export function inspect(object: any, showHidden?: boolean, depth?: number | null, color?: boolean): string;
     export function inspect(object: any, options: InspectOptions): string;
     export function isArray(object: any): boolean;
     export function isRegExp(object: any): boolean;
@@ -2176,6 +2179,7 @@ declare module "module" {
         static _extensions: { [ext: string]: (m: Module, fileName: string) => any }
 
         constructor (filename: string);
+        _compile (m: Module, filename: string): string;
 
         id: string;
         parent: Module;

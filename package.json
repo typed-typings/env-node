@@ -19,6 +19,6 @@
   },
   "homepage": "https://github.com/typed-typings/env-node#readme",
   "devDependencies": {
-    "typescript": "^1.8.9"
+    "typescript": "^2.0.3"
   }
 }

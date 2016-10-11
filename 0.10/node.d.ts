@@ -34,8 +34,15 @@ interface NodeRequireFunction {
 interface NodeRequire extends NodeRequireFunction {
     resolve (id: string): string;
     cache: { [filename: string]: NodeModule };
-    extensions: { [ext: string]: (m: NodeModule, filename: string) => any };
+    extensions: NodeExtensions;
     main: any;
+}
+
+interface NodeExtensions {
+    '.js': (m: NodeModule, filename: string) => any;
+    '.json': (m: NodeModule, filename: string) => any;
+    '.node': (m: NodeModule, filename: string) => any;
+    [ext: string]: (m: NodeModule, filename: string) => any;
 }
 
 declare var require: NodeRequire;
@@ -46,10 +53,10 @@ declare class NodeModule {
     static _nodeModulePaths (path: string): string[];
     static _load (request: string, parent?: NodeModule, isMain?: boolean): any;
     static _resolveFilename (request: string, parent?: NodeModule, isMain?: boolean): string;
-    static _extensions: { [ext: string]: (m: NodeModule, fileName: string) => any }
+    static _extensions: NodeExtensions;
 
     constructor (filename: string);
-    _compile (m: NodeModule, filename: string): string;
+    _compile (code: string, filename: string): string;
 
     id: string;
     parent: NodeModule;

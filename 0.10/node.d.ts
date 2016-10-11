@@ -40,14 +40,25 @@ interface NodeRequire extends NodeRequireFunction {
 
 declare var require: NodeRequire;
 
-interface NodeModule {
-    exports: any;
-    require: NodeRequireFunction;
+declare class NodeModule {
+    static runMain (): void;
+    static wrap (code: string): string;
+    static _nodeModulePaths (path: string): string[];
+    static _load (request: string, parent?: NodeModule, isMain?: boolean): any;
+    static _resolveFilename (request: string, parent?: NodeModule, isMain?: boolean): string;
+    static _extensions: { [ext: string]: (m: NodeModule, fileName: string) => any }
+
+    constructor (filename: string);
+    _compile (m: NodeModule, filename: string): string;
+
     id: string;
-    filename: string;
     parent: NodeModule;
-    loaded: boolean;
+    filename: string;
+    paths: string[];
     children: NodeModule[];
+    exports: any;
+    loaded: boolean;
+    require: NodeRequireFunction;
 }
 
 declare var module: NodeModule;
@@ -1430,26 +1441,5 @@ declare module "domain" {
 }
 
 declare module "module" {
-    class Module implements NodeModule {
-        static runMain (): void;
-        static wrap (code: string): string;
-        static _nodeModulePaths (path: string): string[];
-        static _load (request: string, parent?: Module, isMain?: boolean): any;
-        static _resolveFilename (request: string, parent?: Module, isMain?: boolean): string;
-        static _extensions: { [ext: string]: (m: Module, fileName: string) => any }
-
-        constructor (filename: string);
-        _compile (m: Module, filename: string): string;
-
-        id: string;
-        parent: Module;
-        filename: string;
-        paths: string[];
-        children: Module[];
-        exports: any;
-        loaded: boolean;
-        require: NodeRequireFunction;
-    }
-
-    export = Module;
+    export = NodeModule;
 }

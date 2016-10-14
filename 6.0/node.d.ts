@@ -1116,8 +1116,8 @@ declare module "punycode" {
 }
 
 declare module "repl" {
-    import * as stream from "stream";
-    import * as events from "events";
+    import { EventEmitter } from "events";
+    import { Interface } from "readline";
 
     export interface ReplOptions {
         prompt?: string;
@@ -1130,7 +1130,23 @@ declare module "repl" {
         ignoreUndefined?: boolean;
         writer?: Function;
     }
-    export function start(options: ReplOptions): events.EventEmitter;
+
+    export function start(options: ReplOptions): REPLServer;
+
+    export type REPLCommand = (this: REPLServer, rest: string) => void;
+
+    export class REPLServer extends Interface {
+        inputStream: NodeJS.ReadableStream;
+        outputStream: NodeJS.WritableStream;
+        useColors: boolean;
+        commands: {
+            [command: string]: REPLCommand;
+        };
+        defineCommand (keyword: string, cmd: REPLCommand | { help: string, action: REPLCommand }): void;
+        displayPrompt (preserveCursor?: boolean): void;
+        setPrompt (prompt: string): void;
+        turnOffEditorMode (): void;
+    }
 
     export class Recoverable extends SyntaxError {
         err: Error;
@@ -1150,12 +1166,12 @@ declare module "readline" {
         shift?: boolean;
     }
 
-    export interface ReadLine extends events.EventEmitter {
+    export class Interface extends events.EventEmitter {
         setPrompt(prompt: string): void;
         prompt(preserveCursor?: boolean): void;
         question(query: string, callback: (answer: string) => void): void;
-        pause(): ReadLine;
-        resume(): ReadLine;
+        pause(): this;
+        resume(): this;
         close(): void;
         write(data: string | Buffer, key?: Key): void;
     }
@@ -1170,7 +1186,7 @@ declare module "readline" {
         line: string;
     }
 
-    export interface ReadLineOptions {
+    export interface InterfaceOptions {
         input: NodeJS.ReadableStream;
         output?: NodeJS.WritableStream;
         completer?: Completer;
@@ -1178,8 +1194,8 @@ declare module "readline" {
         historySize?: number;
     }
 
-    export function createInterface(input: NodeJS.ReadableStream, output?: NodeJS.WritableStream, completer?: Completer, terminal?: boolean): ReadLine;
-    export function createInterface(options: ReadLineOptions): ReadLine;
+    export function createInterface(input: NodeJS.ReadableStream, output?: NodeJS.WritableStream, completer?: Completer, terminal?: boolean): Interface;
+    export function createInterface(options: InterfaceOptions): Interface;
 
     export function cursorTo(stream: NodeJS.WritableStream, x: number, y: number): void;
     export function moveCursor(stream: NodeJS.WritableStream, dx: number | string, dy: number | string): void;

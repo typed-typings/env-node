@@ -882,8 +882,8 @@ declare module "punycode" {
 }
 
 declare module "repl" {
-    import * as stream from "stream";
-    import * as events from "events";
+    import { EventEmitter } from "events";
+    import { Interface } from "readline";
 
     export interface ReplOptions {
         prompt?: string;
@@ -896,29 +896,63 @@ declare module "repl" {
         ignoreUndefined?: boolean;
         writer?: Function;
     }
-    export function start(options: ReplOptions): events.EventEmitter;
+
+    export function start(options: ReplOptions): REPLServer;
+
+    export type REPLCommand = (this: REPLServer, rest: string) => void;
+
+    export class REPLServer extends Interface {
+        inputStream: NodeJS.ReadableStream;
+        outputStream: NodeJS.WritableStream;
+        useColors: boolean;
+        commands: {
+            [command: string]: REPLCommand;
+        };
+        defineCommand (keyword: string, cmd: REPLCommand | { help: string, action: REPLCommand }): void;
+        displayPrompt (preserveCursor?: boolean): void;
+        setPrompt (prompt: string): void;
+    }
 }
 
 declare module "readline" {
-    import * as events from "events";
-    import * as stream from "stream";
+    import events = require("events");
 
-    export interface ReadLine extends events.EventEmitter {
+    export interface Key {
+        sequence?: string;
+        name?: string;
+        ctrl?: boolean;
+        meta?: boolean;
+        shift?: boolean;
+    }
+
+    export class Interface extends events.EventEmitter {
         setPrompt(prompt: string): void;
         prompt(preserveCursor?: boolean): void;
-        question(query: string, callback: Function): void;
-        pause(): void;
-        resume(): void;
+        question(query: string, callback: (answer: string) => void): void;
+        pause(): this;
+        resume(): this;
         close(): void;
-        write(data: any, key?: any): void;
+        write(data: string | Buffer, key?: Key): void;
     }
-    export interface ReadLineOptions {
+
+    export interface Completer {
+        (line: string): CompleterResult;
+        (line: string, callback: (err: any, result: CompleterResult) => void): any;
+    }
+
+    export interface CompleterResult {
+        completions: string[];
+        line: string;
+    }
+
+    export interface InterfaceOptions {
         input: NodeJS.ReadableStream;
         output: NodeJS.WritableStream;
-        completer?: Function;
+        completer?: Completer;
         terminal?: boolean;
     }
-    export function createInterface(options: ReadLineOptions): ReadLine;
+
+    export function createInterface(options: InterfaceOptions): Interface;
 }
 
 declare module "vm" {

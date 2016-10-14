@@ -21,11 +21,11 @@ assert.equal(3, "3", "uses == comparator");
 
 assert.notStrictEqual(2, "2", "uses === comparator");
 
-assert.throws(() => { throw "a hammer at your face"; }, undefined, "DODGED IT");
+assert.throws(() => { throw "a hammer at your face"; }, "DODGED IT");
 
 assert.doesNotThrow(() => {
     if (false) { throw "a hammer at your face"; }
-}, undefined, "What the...*crunch*");
+}, "What the...*crunch*");
 
 ////////////////////////////////////////////////////
 /// File system tests : http://nodejs.org/api/fs.html

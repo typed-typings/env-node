@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "allowUnreachableCode": true
+    "allowUnreachableCode": true,
+    "noEmit": true
   },
   "files": [
     "../node.d.ts",

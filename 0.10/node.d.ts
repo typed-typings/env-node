@@ -298,9 +298,9 @@ declare module "buffer" {
 
 declare module "querystring" {
     export function stringify(obj: any, sep?: string, eq?: string): string;
-    export function parse(str: string, sep?: string, eq?: string, options?: { maxKeys?: number; }): any;
-    export function escape(): any;
-    export function unescape(): any;
+    export function parse(str: string, sep?: string, eq?: string, options?: { maxKeys?: number; }): { [key: string]: string | string[] };
+    export function escape(str: string): string;
+    export function unescape(str: string): string;
 }
 
 declare module "events" {

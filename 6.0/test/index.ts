@@ -434,7 +434,7 @@ ds.send("hello", 5000, "127.0.0.1", (error: Error, bytes: number): void => {
 ////////////////////////////////////////////////////
 
 namespace querystring_tests {
-    type SampleObject = { a: string; b: number; }
+    type SampleObject = { a: string; b: string; }
 
     {
         let obj: SampleObject;
@@ -609,16 +609,16 @@ namespace path_tests {
 ////////////////////////////////////////////////////
 
 namespace readline_tests {
-    let rl: readline.ReadLine;
+    let rl: readline.Interface;
 
     {
-        let options: readline.ReadLineOptions;
+        let options: readline.InterfaceOptions;
         let input: NodeJS.ReadableStream;
         let output: NodeJS.WritableStream;
         let completer: readline.Completer;
         let terminal: boolean;
 
-        let result: readline.ReadLine;
+        let result: readline.Interface;
 
         result = readline.createInterface(options);
         result = readline.createInterface(input);
@@ -648,13 +648,13 @@ namespace readline_tests {
     }
 
     {
-        let result: readline.ReadLine;
+        let result: readline.Interface;
 
         result = rl.pause();
     }
 
     {
-        let result: readline.ReadLine;
+        let result: readline.Interface;
 
         result = rl.resume();
     }

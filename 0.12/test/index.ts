@@ -24,11 +24,11 @@ assert.equal(3, "3", "uses == comparator");
 
 assert.notStrictEqual(2, "2", "uses === comparator");
 
-assert.throws(() => { throw "a hammer at your face"; }, undefined, "DODGED IT");
+assert.throws(() => { throw "a hammer at your face"; }, "DODGED IT");
 
 assert.doesNotThrow(() => {
     if (false) { throw "a hammer at your face"; }
-}, undefined, "What the...*crunch*");
+}, "What the...*crunch*");
 
 ////////////////////////////////////////////////////
 /// File system tests : http://nodejs.org/api/fs.html
@@ -81,7 +81,7 @@ fs.readFile('testfile', (err, data) => {
 function bufferTests() {
     var utf8Buffer = new Buffer('test');
     var base64Buffer = new Buffer('','base64');
-    var octets: Uint8Array = null;
+    var octets = new Uint8Array(2);
     var octetBuffer = new Buffer(octets);
     console.log(Buffer.isBuffer(octetBuffer));
     console.log(Buffer.isEncoding('utf8'));

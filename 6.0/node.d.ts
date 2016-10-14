@@ -1131,6 +1131,11 @@ declare module "repl" {
         writer?: Function;
     }
     export function start(options: ReplOptions): events.EventEmitter;
+
+    export class Recoverable extends SyntaxError {
+        err: Error;
+        constructor (err: Error);
+    }
 }
 
 declare module "readline" {

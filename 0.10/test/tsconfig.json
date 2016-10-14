@@ -2,7 +2,8 @@
   "compilerOptions": {
     "module": "commonjs",
     "allowUnreachableCode": true,
-    "noEmit": true
+    "noEmit": true,
+    "lib": ["es2015"]
   },
   "files": [
     "../node.d.ts",

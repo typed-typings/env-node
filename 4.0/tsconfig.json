@@ -4,7 +4,8 @@
     "target": "es5",
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "noEmit": true
+    "noEmit": true,
+    "lib": ["es2015"]
   },
   "files": [
     "node.d.ts"

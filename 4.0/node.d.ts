@@ -1202,22 +1202,22 @@ declare module "vm" {
     }
 
     export class Script {
-        constructor(code: string, options?: ScriptOptions);
-        runInContext(contextifiedSandbox: Context, options?: RunningScriptOptions): any;
-        runInNewContext(sandbox?: Context, options?: RunningScriptOptions): any;
-        runInThisContext(options?: RunningScriptOptions): any;
+        constructor(code: string, options?: string | ScriptOptions);
+        runInContext(contextifiedSandbox: Context, options?: string | RunningScriptOptions): any;
+        runInNewContext(sandbox?: Context, options?: string | RunningScriptOptions): any;
+        runInThisContext(options?: string | RunningScriptOptions): any;
     }
 
     export function createContext(sandbox?: Context): Context;
     export function isContext(sandbox: Context): boolean;
-    export function runInContext(code: string, contextifiedSandbox: Context, options?: RunningScriptOptions): any;
+    export function runInContext(code: string, contextifiedSandbox: Context, options?: string | RunningScriptOptions): any;
     export function runInDebugContext(code: string): any;
-    export function runInNewContext(code: string, sandbox?: Context, options?: RunningScriptOptions): any;
-    export function runInThisContext(code: string, options?: RunningScriptOptions): any;
+    export function runInNewContext(code: string, sandbox?: Context, options?: string | RunningScriptOptions): any;
+    export function runInThisContext(code: string, options?: string | RunningScriptOptions): any;
     /**
      * @deprecated
      */
-    export function createScript(code: string, filename?: string): Script;
+    export function createScript(code: string, options?: string | ScriptOptions): Script;
 }
 
 declare module "child_process" {

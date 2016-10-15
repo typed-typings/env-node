@@ -958,17 +958,26 @@ declare module "readline" {
 declare module "vm" {
     export interface Context {}
 
+    export interface ScriptOptions {
+        filename?: string;
+        displayErrors?: boolean;
+    }
+
+    export interface RunInContextOptions extends ScriptOptions {
+        timeout?: number;
+    }
+
     export class Script {
-        constructor (code: string, filename?: string);
+        constructor (code: string, options?: string | ScriptOptions);
         runInThisContext(): void;
         runInNewContext(sandbox?: Context): void;
     }
 
-    export function runInThisContext(code: string, filename?: string): void;
-    export function runInNewContext(code: string, sandbox?: Context, filename?: string): void;
-    export function runInContext(code: string, context: Context, filename?: string): any;
+    export function runInThisContext(code: string, options?: string | RunInContextOptions): void;
+    export function runInNewContext(code: string, sandbox?: Context, options?: string | RunInContextOptions): void;
+    export function runInContext(code: string, context: Context, options?: string | RunInContextOptions): any;
     export function createContext(initSandbox?: Context): Context;
-    export function createScript(code: string, filename?: string): Script;
+    export function createScript(code: string, options?: string | ScriptOptions): Script;
 }
 
 declare module "child_process" {

@@ -952,7 +952,7 @@ declare module "fs" {
     import stream = require("stream");
     import events = require("events");
 
-    interface Stats {
+    export class Stats {
         isFile(): boolean;
         isDirectory(): boolean;
         isBlockDevice(): boolean;
@@ -975,16 +975,18 @@ declare module "fs" {
         ctime: Date;
     }
 
-    interface FSWatcher extends events.EventEmitter {
+    export class FSWatcher extends events.EventEmitter {
         close(): void;
     }
 
-    export interface ReadStream extends stream.Readable {
+    export class ReadStream extends stream.Readable {
         close(): void;
+        path: string | Buffer;
     }
-    export interface WriteStream extends stream.Writable {
+    export class WriteStream extends stream.Writable {
         close(): void;
         bytesWritten: number;
+        path: string | Buffer;
     }
 
     export function rename(oldPath: string, newPath: string, callback?: (err?: NodeJS.ErrnoException) => void): void;

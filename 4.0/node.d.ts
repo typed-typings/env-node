@@ -1550,7 +1550,7 @@ declare module "fs" {
   import * as stream from "stream";
   import * as events from "events";
 
-  export interface Stats {
+  export class Stats {
     isFile(): boolean;
     isDirectory(): boolean;
     isBlockDevice(): boolean;

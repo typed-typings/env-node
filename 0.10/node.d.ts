@@ -72,6 +72,7 @@ declare var module: NodeModule;
 
 // Same as module.exports
 declare var exports: any;
+
 declare var SlowBuffer: {
   new (str: string, encoding?: string): Buffer;
   new (size: number): Buffer;
@@ -100,18 +101,51 @@ declare interface Console {
 
 declare var console: Console;
 
-// Buffer class
-interface Buffer extends NodeBuffer { }
-declare var Buffer: {
-  new (str: string, encoding?: string): Buffer;
-  new (size: number): Buffer;
-  new (size: Uint8Array): Buffer;
-  new (array: any[]): Buffer;
-  prototype: Buffer;
-  isBuffer(obj: any): boolean;
-  byteLength(string: string, encoding?: string): number;
-  concat(list: Buffer[], totalLength?: number): Buffer;
-};
+declare class Buffer {
+  [index: number]: number;
+  constructor(str: string, encoding?: string);
+  constructor(size: number);
+  constructor(size: Uint8Array);
+  constructor(array: any[]);
+  static isBuffer(obj: any): boolean;
+  static byteLength(string: string, encoding?: string): number;
+  static concat(list: Buffer[], totalLength?: number): Buffer;
+  write(string: string, offset?: number, length?: number, encoding?: string): number;
+  toString(encoding?: string, start?: number, end?: number): string;
+  toJSON(): any;
+  length: number;
+  copy(targetBuffer: Buffer, targetStart?: number, sourceStart?: number, sourceEnd?: number): number;
+  slice(start?: number, end?: number): Buffer;
+  readUInt8(offset: number, noAssert?: boolean): number;
+  readUInt16LE(offset: number, noAssert?: boolean): number;
+  readUInt16BE(offset: number, noAssert?: boolean): number;
+  readUInt32LE(offset: number, noAssert?: boolean): number;
+  readUInt32BE(offset: number, noAssert?: boolean): number;
+  readInt8(offset: number, noAssert?: boolean): number;
+  readInt16LE(offset: number, noAssert?: boolean): number;
+  readInt16BE(offset: number, noAssert?: boolean): number;
+  readInt32LE(offset: number, noAssert?: boolean): number;
+  readInt32BE(offset: number, noAssert?: boolean): number;
+  readFloatLE(offset: number, noAssert?: boolean): number;
+  readFloatBE(offset: number, noAssert?: boolean): number;
+  readDoubleLE(offset: number, noAssert?: boolean): number;
+  readDoubleBE(offset: number, noAssert?: boolean): number;
+  writeUInt8(value: number, offset: number, noAssert?: boolean): void;
+  writeUInt16LE(value: number, offset: number, noAssert?: boolean): void;
+  writeUInt16BE(value: number, offset: number, noAssert?: boolean): void;
+  writeUInt32LE(value: number, offset: number, noAssert?: boolean): void;
+  writeUInt32BE(value: number, offset: number, noAssert?: boolean): void;
+  writeInt8(value: number, offset: number, noAssert?: boolean): void;
+  writeInt16LE(value: number, offset: number, noAssert?: boolean): void;
+  writeInt16BE(value: number, offset: number, noAssert?: boolean): void;
+  writeInt32LE(value: number, offset: number, noAssert?: boolean): void;
+  writeInt32BE(value: number, offset: number, noAssert?: boolean): void;
+  writeFloatLE(value: number, offset: number, noAssert?: boolean): void;
+  writeFloatBE(value: number, offset: number, noAssert?: boolean): void;
+  writeDoubleLE(value: number, offset: number, noAssert?: boolean): void;
+  writeDoubleBE(value: number, offset: number, noAssert?: boolean): void;
+  fill(value: any, offset?: number, end?: number): void;
+}
 
 /************************************************
 *                                               *
@@ -243,48 +277,6 @@ declare namespace NodeJS {
     ref(): void;
     unref(): void;
   }
-}
-
-/**
- * @deprecated
- */
-interface NodeBuffer {
-  [index: number]: number;
-  write(string: string, offset?: number, length?: number, encoding?: string): number;
-  toString(encoding?: string, start?: number, end?: number): string;
-  toJSON(): any;
-  length: number;
-  copy(targetBuffer: Buffer, targetStart?: number, sourceStart?: number, sourceEnd?: number): number;
-  slice(start?: number, end?: number): Buffer;
-  readUInt8(offset: number, noAssert?: boolean): number;
-  readUInt16LE(offset: number, noAssert?: boolean): number;
-  readUInt16BE(offset: number, noAssert?: boolean): number;
-  readUInt32LE(offset: number, noAssert?: boolean): number;
-  readUInt32BE(offset: number, noAssert?: boolean): number;
-  readInt8(offset: number, noAssert?: boolean): number;
-  readInt16LE(offset: number, noAssert?: boolean): number;
-  readInt16BE(offset: number, noAssert?: boolean): number;
-  readInt32LE(offset: number, noAssert?: boolean): number;
-  readInt32BE(offset: number, noAssert?: boolean): number;
-  readFloatLE(offset: number, noAssert?: boolean): number;
-  readFloatBE(offset: number, noAssert?: boolean): number;
-  readDoubleLE(offset: number, noAssert?: boolean): number;
-  readDoubleBE(offset: number, noAssert?: boolean): number;
-  writeUInt8(value: number, offset: number, noAssert?: boolean): void;
-  writeUInt16LE(value: number, offset: number, noAssert?: boolean): void;
-  writeUInt16BE(value: number, offset: number, noAssert?: boolean): void;
-  writeUInt32LE(value: number, offset: number, noAssert?: boolean): void;
-  writeUInt32BE(value: number, offset: number, noAssert?: boolean): void;
-  writeInt8(value: number, offset: number, noAssert?: boolean): void;
-  writeInt16LE(value: number, offset: number, noAssert?: boolean): void;
-  writeInt16BE(value: number, offset: number, noAssert?: boolean): void;
-  writeInt32LE(value: number, offset: number, noAssert?: boolean): void;
-  writeInt32BE(value: number, offset: number, noAssert?: boolean): void;
-  writeFloatLE(value: number, offset: number, noAssert?: boolean): void;
-  writeFloatBE(value: number, offset: number, noAssert?: boolean): void;
-  writeDoubleLE(value: number, offset: number, noAssert?: boolean): void;
-  writeDoubleBE(value: number, offset: number, noAssert?: boolean): void;
-  fill(value: any, offset?: number, end?: number): void;
 }
 
 /************************************************
@@ -1213,77 +1205,107 @@ declare module "tls" {
 }
 
 declare module "crypto" {
+  import * as stream from "stream";
+
   export interface CredentialDetails {
-    pfx: string;
+    pfx: string | Buffer;
     key: string;
     passphrase: string;
     cert: string;
-    ca: any;    //string | string array
-    crl: any;   //string | string array
+    ca: string | string[];
+    crl: string | string[];
     ciphers: string;
   }
+
   export interface Credentials { context?: any; }
+
   export function createCredentials(details: CredentialDetails): Credentials;
+
+  export function getCiphers(): string[];
+  export function getHashes(): string[];
+
   export function createHash(algorithm: string): Hash;
-  export function createHmac(algorithm: string, key: string): Hmac;
-  export function createHmac(algorithm: string, key: Buffer): Hmac;
-  interface Hash {
-    update(data: any, input_encoding?: string): Hash;
+
+  export class Hash extends stream.Transform {
+    update(data: string | Buffer, input_encoding?: string): Hash;
     digest(encoding: 'buffer'): Buffer;
-    digest(encoding: string): any;
+    digest(encoding: string): string;
     digest(): Buffer;
   }
-  interface Hmac {
-    update(data: any, input_encoding?: string): Hmac;
+
+  export function createHmac(algorithm: string, key: string | Buffer): Hmac;
+
+  export class Hmac extends stream.Transform {
+    update(data: string | Buffer, input_encoding?: string): Hmac;
     digest(encoding: 'buffer'): Buffer;
-    digest(encoding: string): any;
+    digest(encoding: string): string;
     digest(): Buffer;
   }
-  export function createCipher(algorithm: string, password: any): Cipher;
-  export function createCipheriv(algorithm: string, key: any, iv: any): Cipher;
-  interface Cipher {
+
+  export function createCipher(algorithm: string, password: string | Buffer): Cipher;
+  export function createCipheriv(algorithm: string, key: string | Buffer, iv: string | Buffer): Cipher;
+
+  export class Cipher extends stream.Transform {
     update(data: Buffer): Buffer;
-    update(data: string, input_encoding?: string, output_encoding?: string): string;
+    update(data: string, input_encoding: "utf8" | "ascii" | "binary" | "latin1"): Buffer;
+    update(data: Buffer, input_encoding: any, output_encoding: "binary" | "latin1" | "base64" | "hex"): string;
+    update(data: string, input_encoding: "utf8" | "ascii" | "binary" | "latin1", output_encoding: "binary" | "latin1" | "base64" | "hex"): string;
     final(): Buffer;
     final(output_encoding: string): string;
     setAutoPadding(auto_padding: boolean): void;
   }
-  export function createDecipher(algorithm: string, password: any): Decipher;
-  export function createDecipheriv(algorithm: string, key: any, iv: any): Decipher;
-  interface Decipher {
+
+  export function createDecipher(algorithm: string, password: string | Buffer): Decipher;
+  export function createDecipheriv(algorithm: string, key: string | Buffer, iv: string | Buffer): Decipher;
+
+  export class Decipher extends stream.Transform {
     update(data: Buffer): Buffer;
-    update(data: string, input_encoding?: string, output_encoding?: string): string;
+    update(data: string, input_encoding: "binary" | "latin1" | "base64" | "hex"): Buffer;
+    update(data: Buffer, input_encoding: any, output_encoding: "utf8" | "ascii" | "binary" | "latin1"): string;
+    update(data: string, input_encoding: "binary" | "latin1" | "base64" | "hex", output_encoding: "utf8" | "ascii" | "binary" | "latin1"): string;
     final(): Buffer;
     final(output_encoding: string): string;
     setAutoPadding(auto_padding: boolean): void;
   }
+
   export function createSign(algorithm: string): Signer;
-  interface Signer {
-    update(data: any): void;
+
+  export class Signer extends stream.Writable {
+    update(data: string | Buffer): void;
+    sign(private_key: string): Buffer;
     sign(private_key: string, output_format: string): string;
   }
+
   export function createVerify(algorith: string): Verify;
-  interface Verify {
-    update(data: any): void;
+
+  export class Verify extends stream.Writable {
+    update(data: string | Buffer): void;
     verify(object: string, signature: string, signature_format?: string): boolean;
   }
-  export function createDiffieHellman(prime_length: number): DiffieHellman;
-  export function createDiffieHellman(prime: number, encoding?: string): DiffieHellman;
-  interface DiffieHellman {
-    generateKeys(encoding?: string): string;
+
+  export function createDiffieHellman(prime_length: number, generator?: number | string | Buffer): DiffieHellman;
+  export function getDiffieHellman(group_name: string): DiffieHellman;
+
+  export class DiffieHellman {
     computeSecret(other_public_key: string, input_encoding?: string, output_encoding?: string): string;
+    generateKeys(encoding?: string): string;
     getPrime(encoding?: string): string;
-    getGenerator(encoding: string): string;
+    getGenerator(encoding?: string): string;
     getPublicKey(encoding?: string): string;
     getPrivateKey(encoding?: string): string;
     setPublicKey(public_key: string, encoding?: string): void;
-    setPrivateKey(public_key: string, encoding?: string): void;
+    setPrivateKey(private_key: string, encoding?: string): void;
   }
-  export function getDiffieHellman(group_name: string): DiffieHellman;
-  export function pbkdf2(password: string | Buffer, salt: string | Buffer, iterations: number, keylen: number, callback: (err: Error, derivedKey: Buffer) => any): void;
+
+  export function pbkdf2(password: string | Buffer, salt: string | Buffer, iterations: number, keylen: number, callback: (err: Error, derivedKey: Buffer) => void): void;
+  export function pbkdf2(password: string | Buffer, salt: string | Buffer, iterations: number, keylen: number, digest: string, callback: (err: Error, derivedKey: Buffer) => void): void;
+
   export function pbkdf2Sync(password: string | Buffer, salt: string | Buffer, iterations: number, keylen: number): Buffer;
+  export function pbkdf2Sync(password: string | Buffer, salt: string | Buffer, iterations: number, keylen: number, digest: string): Buffer;
+
   export function randomBytes(size: number): Buffer;
   export function randomBytes(size: number, callback: (err: Error, buf: Buffer) => void): void;
+
   export function pseudoRandomBytes(size: number): Buffer;
   export function pseudoRandomBytes(size: number, callback: (err: Error, buf: Buffer) => void): void;
 }

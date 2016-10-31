@@ -214,6 +214,11 @@ function bufferTests() {
     index = buffer.indexOf(buffer);
   }
 
+  {
+    const buffer = Buffer.from('123');
+    buffer[0] === 123;
+  }
+
   // Imported Buffer from buffer module works properly
   {
     let b = new ImportedBuffer('123');

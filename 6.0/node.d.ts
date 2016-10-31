@@ -38,6 +38,7 @@ interface NodeError {
    */
   message: string;
 }
+
 interface Error extends NodeError { }
 
 interface ErrorConstructor {
@@ -83,8 +84,10 @@ interface ErrorConstructor {
 interface NodeCollection {
   size: number;
 }
+
 interface NodeWeakCollection {
 }
+
 interface NodeCollectionConstructor<T> {
   prototype: T;
 }
@@ -249,35 +252,27 @@ declare interface Console {
 
 declare var console: Console;
 
-// Buffer class
-type BufferEncoding = "ascii" | "utf8" | "utf16le" | "ucs2" | "binary" | "hex";
-interface Buffer extends NodeBuffer { }
-
-/**
- * Raw data is stored in instances of the Buffer class.
- * A Buffer is similar to an array of integers but corresponds to a raw memory allocation outside the V8 heap.  A Buffer cannot be resized.
- * Valid string encodings: 'ascii'|'utf8'|'utf16le'|'ucs2'(alias of 'utf16le')|'base64'|'binary'(deprecated)|'hex'
- */
-declare var Buffer: {
+declare class Buffer extends Uint8Array {
+  [index: number]: number;
   /**
    * Allocates a new buffer containing the given {str}.
    *
    * @param str String to store in buffer.
    * @param encoding encoding to use, optional.  Default is 'utf8'
    */
-  new (str: string, encoding?: string): Buffer;
+  constructor(str: string, encoding?: string);
   /**
    * Allocates a new buffer of {size} octets.
    *
    * @param size count of octets to allocate.
    */
-  new (size: number): Buffer;
+  constructor(size: number);
   /**
    * Allocates a new buffer containing the given {array} of octets.
    *
    * @param array The octets to store.
    */
-  new (array: Uint8Array): Buffer;
+  constructor(array: Uint8Array);
   /**
    * Produces a Buffer backed by the same allocated memory as
    * the given {ArrayBuffer}.
@@ -285,26 +280,25 @@ declare var Buffer: {
    *
    * @param arrayBuffer The ArrayBuffer with which to share memory.
    */
-  new (arrayBuffer: ArrayBuffer): Buffer;
+  constructor(arrayBuffer: ArrayBuffer);
   /**
    * Allocates a new buffer containing the given {array} of octets.
    *
    * @param array The octets to store.
    */
-  new (array: any[]): Buffer;
+  constructor(array: any[]);
   /**
    * Copies the passed {buffer} data onto a new {Buffer} instance.
    *
    * @param buffer The buffer to copy.
    */
-  new (buffer: Buffer): Buffer;
-  prototype: Buffer;
+  constructor(buffer: Buffer);
   /**
    * Allocates a new Buffer using an {array} of octets.
    *
    * @param array
    */
-  from(array: any[]): Buffer;
+  static from(array: any[]): Buffer;
   /**
    * When passed a reference to the .buffer property of a TypedArray instance,
    * the newly created Buffer will share the same allocated memory as the TypedArray.
@@ -315,13 +309,13 @@ declare var Buffer: {
    * @param byteOffset
    * @param length
    */
-  from(arrayBuffer: ArrayBuffer, byteOffset?: number, length?: number): Buffer;
+  static from(arrayBuffer: ArrayBuffer, byteOffset?: number, length?: number): Buffer;
   /**
    * Copies the passed {buffer} data onto a new Buffer instance.
    *
    * @param buffer
    */
-  from(buffer: Buffer): Buffer;
+  static from(buffer: Buffer): Buffer;
   /**
    * Allocates a new `Buffer` of `size` bytes. If `fill` is `undefined`, the `Buffer` will be _zero-filled_.
    *
@@ -329,7 +323,7 @@ declare var Buffer: {
    * @param fill A value to pre-fill the new `Buffer` with. Default: `0`
    * @param encoding If `fill` is a string, this is its encoding. Default: `'utf8'`
    */
-  alloc(size: number, fill?: string | Buffer | number, encoding?: string): Buffer;
+  static alloc(size: number, fill?: string | Buffer | number, encoding?: string): Buffer;
   /**
    * Allocates a new _non-zero-filled_ `Buffer` of `size` bytes. The `size` must be less than or equal to the value of `buffer.kMaxLength`. Otherwise, a `RangeError` is thrown. A zero-length `Buffer` will be created if `size <= 0`.
    *
@@ -337,7 +331,7 @@ declare var Buffer: {
    *
    * @param size The desired length of the new `Buffer`
    */
-  allocUnsafe(size: number): Buffer;
+  static allocUnsafe(size: number): Buffer;
   /**
    * Creates a new Buffer containing the given JavaScript string {str}.
    * If provided, the {encoding} parameter identifies the character encoding.
@@ -345,20 +339,17 @@ declare var Buffer: {
    *
    * @param str
    */
-  from(str: string, encoding?: string): Buffer;
+  static from(str: string, encoding?: string): Buffer;
   /**
-   * Returns true if {obj} is a Buffer
-   *
-   * @param obj object to test.
+   * Returns `true` if `obj` is a Buffer, `false` otherwise.
    */
-  isBuffer(obj: any): obj is Buffer;
+  static isBuffer(obj: any): obj is Buffer;
   /**
-   * Returns true if {encoding} is a valid encoding argument.
-   * Valid string encodings in Node 0.12: 'ascii'|'utf8'|'utf16le'|'ucs2'(alias of 'utf16le')|'base64'|'binary'(deprecated)|'hex'
+   * Returns `true` if `encoding` contains a supported character encoding, or `false` otherwise.
    *
-   * @param encoding string to test.
+   * @param encoding A character encoding name to check.
    */
-  isEncoding(encoding: string): boolean;
+  static isEncoding(encoding: string): boolean;
   /**
    * Gives the actual byte length of a string. encoding defaults to 'utf8'.
    * This is not the same as String.prototype.length since that returns the number of characters in a string.
@@ -366,7 +357,7 @@ declare var Buffer: {
    * @param string string to test.
    * @param encoding encoding used to evaluate (defaults to 'utf8')
    */
-  byteLength(string: string, encoding?: string): number;
+  static byteLength(string: string, encoding?: string): number;
   /**
    * Returns a buffer which is the result of concatenating all the buffers in the list together.
    *
@@ -378,12 +369,64 @@ declare var Buffer: {
    * @param totalLength Total length of the buffers when concatenated.
    *   If totalLength is not provided, it is read from the buffers in the list. However, this adds an additional loop to the function, so it is faster to provide the length explicitly.
    */
-  concat(list: Buffer[], totalLength?: number): Buffer;
+  static concat(list: Buffer[], totalLength?: number): Buffer;
   /**
    * The same as buf1.compare(buf2).
    */
   compare(buf1: Buffer, buf2: Buffer): number;
-};
+  write(string: string, offset?: number, length?: number, encoding?: string): number;
+  toString(encoding?: string, start?: number, end?: number): string;
+  toJSON(): any;
+  equals(otherBuffer: Buffer): boolean;
+  compare(otherBuffer: Buffer): number;
+  copy(targetBuffer: Buffer, targetStart?: number, sourceStart?: number, sourceEnd?: number): number;
+  slice(start?: number, end?: number): Buffer;
+  writeUIntLE(value: number, offset: number, byteLength: number, noAssert?: boolean): number;
+  writeUIntBE(value: number, offset: number, byteLength: number, noAssert?: boolean): number;
+  writeIntLE(value: number, offset: number, byteLength: number, noAssert?: boolean): number;
+  writeIntBE(value: number, offset: number, byteLength: number, noAssert?: boolean): number;
+  readUIntLE(offset: number, byteLength: number, noAssert?: boolean): number;
+  readUIntBE(offset: number, byteLength: number, noAssert?: boolean): number;
+  readIntLE(offset: number, byteLength: number, noAssert?: boolean): number;
+  readIntBE(offset: number, byteLength: number, noAssert?: boolean): number;
+  readUInt8(offset: number, noAssert?: boolean): number;
+  readUInt16LE(offset: number, noAssert?: boolean): number;
+  readUInt16BE(offset: number, noAssert?: boolean): number;
+  readUInt32LE(offset: number, noAssert?: boolean): number;
+  readUInt32BE(offset: number, noAssert?: boolean): number;
+  readInt8(offset: number, noAssert?: boolean): number;
+  readInt16LE(offset: number, noAssert?: boolean): number;
+  readInt16BE(offset: number, noAssert?: boolean): number;
+  readInt32LE(offset: number, noAssert?: boolean): number;
+  readInt32BE(offset: number, noAssert?: boolean): number;
+  readFloatLE(offset: number, noAssert?: boolean): number;
+  readFloatBE(offset: number, noAssert?: boolean): number;
+  readDoubleLE(offset: number, noAssert?: boolean): number;
+  readDoubleBE(offset: number, noAssert?: boolean): number;
+  writeUInt8(value: number, offset: number, noAssert?: boolean): number;
+  writeUInt16LE(value: number, offset: number, noAssert?: boolean): number;
+  writeUInt16BE(value: number, offset: number, noAssert?: boolean): number;
+  writeUInt32LE(value: number, offset: number, noAssert?: boolean): number;
+  writeUInt32BE(value: number, offset: number, noAssert?: boolean): number;
+  writeInt8(value: number, offset: number, noAssert?: boolean): number;
+  writeInt16LE(value: number, offset: number, noAssert?: boolean): number;
+  writeInt16BE(value: number, offset: number, noAssert?: boolean): number;
+  writeInt32LE(value: number, offset: number, noAssert?: boolean): number;
+  writeInt32BE(value: number, offset: number, noAssert?: boolean): number;
+  writeFloatLE(value: number, offset: number, noAssert?: boolean): number;
+  writeFloatBE(value: number, offset: number, noAssert?: boolean): number;
+  writeDoubleLE(value: number, offset: number, noAssert?: boolean): number;
+  writeDoubleBE(value: number, offset: number, noAssert?: boolean): number;
+  fill(value: any, offset?: number, end?: number): this;
+  indexOf(value: string | number | Buffer, byteOffset?: number, encoding?: string): number;
+  lastIndexOf(value: string | number | Buffer, byteOffset?: number, encoding?: string): number;
+  swap16(): this;
+  swap64(): this;
+  includes(value: string | Buffer | number, byteOffset?: number, encoding?: string): boolean;
+  // TODO: entries
+  // TODO: keys
+  // TODO: values
+}
 
 /************************************************
 *                                               *
@@ -611,62 +654,6 @@ declare namespace NodeJS {
     ref(): void;
     unref(): void;
   }
-}
-
-/**
- * @deprecated
- */
-interface NodeBuffer extends Uint8Array {
-  write(string: string, offset?: number, length?: number, encoding?: string): number;
-  toString(encoding?: string, start?: number, end?: number): string;
-  toJSON(): any;
-  equals(otherBuffer: Buffer): boolean;
-  compare(otherBuffer: Buffer): number;
-  copy(targetBuffer: Buffer, targetStart?: number, sourceStart?: number, sourceEnd?: number): number;
-  slice(start?: number, end?: number): Buffer;
-  writeUIntLE(value: number, offset: number, byteLength: number, noAssert?: boolean): number;
-  writeUIntBE(value: number, offset: number, byteLength: number, noAssert?: boolean): number;
-  writeIntLE(value: number, offset: number, byteLength: number, noAssert?: boolean): number;
-  writeIntBE(value: number, offset: number, byteLength: number, noAssert?: boolean): number;
-  readUIntLE(offset: number, byteLength: number, noAssert?: boolean): number;
-  readUIntBE(offset: number, byteLength: number, noAssert?: boolean): number;
-  readIntLE(offset: number, byteLength: number, noAssert?: boolean): number;
-  readIntBE(offset: number, byteLength: number, noAssert?: boolean): number;
-  readUInt8(offset: number, noAssert?: boolean): number;
-  readUInt16LE(offset: number, noAssert?: boolean): number;
-  readUInt16BE(offset: number, noAssert?: boolean): number;
-  readUInt32LE(offset: number, noAssert?: boolean): number;
-  readUInt32BE(offset: number, noAssert?: boolean): number;
-  readInt8(offset: number, noAssert?: boolean): number;
-  readInt16LE(offset: number, noAssert?: boolean): number;
-  readInt16BE(offset: number, noAssert?: boolean): number;
-  readInt32LE(offset: number, noAssert?: boolean): number;
-  readInt32BE(offset: number, noAssert?: boolean): number;
-  readFloatLE(offset: number, noAssert?: boolean): number;
-  readFloatBE(offset: number, noAssert?: boolean): number;
-  readDoubleLE(offset: number, noAssert?: boolean): number;
-  readDoubleBE(offset: number, noAssert?: boolean): number;
-  writeUInt8(value: number, offset: number, noAssert?: boolean): number;
-  writeUInt16LE(value: number, offset: number, noAssert?: boolean): number;
-  writeUInt16BE(value: number, offset: number, noAssert?: boolean): number;
-  writeUInt32LE(value: number, offset: number, noAssert?: boolean): number;
-  writeUInt32BE(value: number, offset: number, noAssert?: boolean): number;
-  writeInt8(value: number, offset: number, noAssert?: boolean): number;
-  writeInt16LE(value: number, offset: number, noAssert?: boolean): number;
-  writeInt16BE(value: number, offset: number, noAssert?: boolean): number;
-  writeInt32LE(value: number, offset: number, noAssert?: boolean): number;
-  writeInt32BE(value: number, offset: number, noAssert?: boolean): number;
-  writeFloatLE(value: number, offset: number, noAssert?: boolean): number;
-  writeFloatBE(value: number, offset: number, noAssert?: boolean): number;
-  writeDoubleLE(value: number, offset: number, noAssert?: boolean): number;
-  writeDoubleBE(value: number, offset: number, noAssert?: boolean): number;
-  fill(value: any, offset?: number, end?: number): this;
-  // TODO: encoding param
-  indexOf(value: string | number | Buffer, byteOffset?: number): number;
-  // TODO: entries
-  // TODO: includes
-  // TODO: keys
-  // TODO: values
 }
 
 /************************************************
@@ -1250,6 +1237,8 @@ declare module "vm" {
 declare module "child_process" {
   import * as events from "events";
   import * as stream from "stream";
+
+  export type BufferEncoding = "ascii" | "utf8" | "utf16le" | "ucs2" | "binary" | "latin1" | "hex";
 
   export interface ChildProcess extends events.EventEmitter {
     stdin: stream.Writable;
@@ -2114,103 +2103,143 @@ declare module "tls" {
   export function connect(options: TlsOptions, secureConnectionListener?: () => void): ClearTextStream;
   export function connect(port: number, host?: string, options?: ConnectionOptions, secureConnectListener?: () => void): ClearTextStream;
   export function connect(port: number, options?: ConnectionOptions, secureConnectListener?: () => void): ClearTextStream;
-  export function createSecurePair(credentials?: crypto.Credentials, isServer?: boolean, requestCert?: boolean, rejectUnauthorized?: boolean): SecurePair;
   export function createSecureContext(details: SecureContextOptions): SecureContext;
 }
 
 declare module "crypto" {
-  export interface CredentialDetails {
-    pfx: string;
-    key: string;
-    passphrase: string;
-    cert: string;
-    ca: string | string[];
-    crl: string | string[];
-    ciphers: string;
+  import * as stream from "stream";
+
+  export var constants: {
+    defaultCipherList: string;
+    defaultCoreCipherList: string;
+    [key: string]: string | number;
   }
-  export interface Credentials { context?: any; }
-  export function createCredentials(details: CredentialDetails): Credentials;
+
+  export function getCiphers(): string[];
+  export function getCurves(): string[];
+  export function getHashes(): string[];
+
+  export class Certificate {
+    constructor();
+    exportChallenge(spkac: string | Buffer, encoding?: string): string;
+    exportPublicKey(spkac: string | Buffer, encoding?: string): Buffer;
+    verifySpkac(spkac: Buffer): boolean;
+  }
+
   export function createHash(algorithm: string): Hash;
-  export function createHmac(algorithm: string, key: string): Hmac;
-  export function createHmac(algorithm: string, key: Buffer): Hmac;
-  export interface Hash {
-    update(data: any, input_encoding?: string): Hash;
+
+  export class Hash extends stream.Transform {
+    update(data: string | Buffer, input_encoding?: string): Hash;
     digest(encoding: 'buffer'): Buffer;
-    digest(encoding: string): any;
+    digest(encoding: string): string;
     digest(): Buffer;
   }
-  export interface Hmac extends NodeJS.ReadWriteStream {
-    update(data: any, input_encoding?: string): Hmac;
+
+  export function createHmac(algorithm: string, key: string | Buffer): Hmac;
+
+  export class Hmac extends stream.Transform {
+    update(data: string | Buffer, input_encoding?: string): Hmac;
     digest(encoding: 'buffer'): Buffer;
-    digest(encoding: string): any;
+    digest(encoding: string): string;
     digest(): Buffer;
   }
-  export function createCipher(algorithm: string, password: any): Cipher;
-  export function createCipheriv(algorithm: string, key: any, iv: any): Cipher;
-  export interface Cipher extends NodeJS.ReadWriteStream {
+
+  export function createCipher(algorithm: string, password: string | Buffer): Cipher;
+  export function createCipheriv(algorithm: string, key: string | Buffer, iv: string | Buffer): Cipher;
+
+  export class Cipher extends stream.Transform {
     update(data: Buffer): Buffer;
-    update(data: string, input_encoding: "utf8" | "ascii" | "binary"): Buffer;
-    update(data: Buffer, input_encoding: any, output_encoding: "binary" | "base64" | "hex"): string;
-    update(data: string, input_encoding: "utf8" | "ascii" | "binary", output_encoding: "binary" | "base64" | "hex"): string;
+    update(data: string, input_encoding: "utf8" | "ascii" | "binary" | "latin1"): Buffer;
+    update(data: Buffer, input_encoding: any, output_encoding: "binary" | "latin1" | "base64" | "hex"): string;
+    update(data: string, input_encoding: "utf8" | "ascii" | "binary" | "latin1", output_encoding: "binary" | "latin1" | "base64" | "hex"): string;
     final(): Buffer;
     final(output_encoding: string): string;
+    setAAD(buffer: Buffer): void;
     setAutoPadding(auto_padding: boolean): void;
     getAuthTag(): Buffer;
   }
-  export function createDecipher(algorithm: string, password: any): Decipher;
-  export function createDecipheriv(algorithm: string, key: any, iv: any): Decipher;
-  export interface Decipher extends NodeJS.ReadWriteStream {
+
+  export function createDecipher(algorithm: string, password: string | Buffer): Decipher;
+  export function createDecipheriv(algorithm: string, key: string | Buffer, iv: string | Buffer): Decipher;
+
+  export class Decipher extends stream.Transform {
     update(data: Buffer): Buffer;
-    update(data: string, input_encoding: "binary" | "base64" | "hex"): Buffer;
-    update(data: Buffer, input_encoding: any, output_encoding: "utf8" | "ascii" | "binary"): string;
-    update(data: string, input_encoding: "binary" | "base64" | "hex", output_encoding: "utf8" | "ascii" | "binary"): string;
+    update(data: string, input_encoding: "binary" | "latin1" | "base64" | "hex"): Buffer;
+    update(data: Buffer, input_encoding: any, output_encoding: "utf8" | "ascii" | "binary" | "latin1"): string;
+    update(data: string, input_encoding: "binary" | "latin1" | "base64" | "hex", output_encoding: "utf8" | "ascii" | "binary" | "latin1"): string;
     final(): Buffer;
     final(output_encoding: string): string;
+    setAAD(buffer: Buffer): void;
     setAutoPadding(auto_padding: boolean): void;
     setAuthTag(tag: Buffer): void;
   }
+
   export function createSign(algorithm: string): Signer;
-  export interface Signer extends NodeJS.WritableStream {
-    update(data: any): void;
+
+  export class Signer extends stream.Writable {
+    update(data: string | Buffer): void;
+    sign(private_key: string): Buffer;
     sign(private_key: string, output_format: string): string;
   }
+
   export function createVerify(algorith: string): Verify;
-  export interface Verify extends NodeJS.WritableStream {
-    update(data: any): void;
+
+  export class Verify extends stream.Writable {
+    update(data: string | Buffer): void;
     verify(object: string, signature: string, signature_format?: string): boolean;
   }
-  export function createDiffieHellman(prime_length: number): DiffieHellman;
-  export function createDiffieHellman(prime: number, encoding?: string): DiffieHellman;
-  export interface DiffieHellman {
-    generateKeys(encoding?: string): string;
+
+  export function createDiffieHellman(prime: number, prime_encoding?: string, generator?: number | string | Buffer, generator_encoding?: string): DiffieHellman;
+  export function createDiffieHellman(prime_length: number, generator?: number | string | Buffer): DiffieHellman;
+  export function getDiffieHellman(group_name: string): DiffieHellman;
+
+  export class DiffieHellman {
+    verifyError: number;
     computeSecret(other_public_key: string, input_encoding?: string, output_encoding?: string): string;
+    generateKeys(encoding?: string): string;
     getPrime(encoding?: string): string;
-    getGenerator(encoding: string): string;
+    getGenerator(encoding?: string): string;
     getPublicKey(encoding?: string): string;
     getPrivateKey(encoding?: string): string;
     setPublicKey(public_key: string, encoding?: string): void;
     setPrivateKey(public_key: string, encoding?: string): void;
   }
-  export function getDiffieHellman(group_name: string): DiffieHellman;
-  export function pbkdf2(password: string | Buffer, salt: string | Buffer, iterations: number, keylen: number, callback: (err: Error, derivedKey: Buffer) => any): void;
-  export function pbkdf2(password: string | Buffer, salt: string | Buffer, iterations: number, keylen: number, digest: string, callback: (err: Error, derivedKey: Buffer) => any): void;
+
+  export function createECDH(curve_name: string): ECDH;
+
+  export class ECDH {
+    computeSecret(other_public_key: string, input_encoding?: string, output_encoding?: string): string;
+    generateKeys(encoding?: string, format?: string): string;
+    getPrivateKey(encoding?: string): string;
+    getPublicKey(encoding?: string, format?: string): string;
+    setPrivateKey(private_key: string, encoding?: string): void;
+  }
+
+  export function pbkdf2(password: string | Buffer, salt: string | Buffer, iterations: number, keylen: number, callback: (err: Error, derivedKey: Buffer) => void): void;
+  export function pbkdf2(password: string | Buffer, salt: string | Buffer, iterations: number, keylen: number, digest: string, callback: (err: Error, derivedKey: Buffer) => void): void;
+
   export function pbkdf2Sync(password: string | Buffer, salt: string | Buffer, iterations: number, keylen: number): Buffer;
   export function pbkdf2Sync(password: string | Buffer, salt: string | Buffer, iterations: number, keylen: number, digest: string): Buffer;
+
   export function randomBytes(size: number): Buffer;
   export function randomBytes(size: number, callback: (err: Error, buf: Buffer) => void): void;
+
   export function pseudoRandomBytes(size: number): Buffer;
   export function pseudoRandomBytes(size: number, callback: (err: Error, buf: Buffer) => void): void;
-  export interface RsaPublicKey {
-    key: string;
-    padding?: any;
-  }
-  export interface RsaPrivateKey {
+
+  export interface RsaKey {
     key: string;
     passphrase?: string,
-    padding?: any;
+    padding?: number;
   }
-  export function publicEncrypt(public_key: string | RsaPublicKey, buffer: Buffer): Buffer
-  export function privateDecrypt(private_key: string | RsaPrivateKey, buffer: Buffer): Buffer
+
+  export function timingSafeEqual(a: Buffer, b: Buffer): boolean;
+  export function publicEncrypt(public_key: string | RsaKey, buffer: Buffer): Buffer;
+  export function privateEncrypt(private_key: string | RsaKey, buffer: Buffer): Buffer;
+  export function publicDecrypt(public_key: string | RsaKey, buffer: Buffer): Buffer;
+  export function privateDecrypt(private_key: string | RsaKey, buffer: Buffer): Buffer;
+
+  export function setEngine (engine: string, flags?: number): void;
 }
 
 declare module "stream" {

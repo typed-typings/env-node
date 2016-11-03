@@ -504,6 +504,11 @@ declare namespace NodeJS {
     heapUsed: number;
   }
 
+  export interface Env {
+    PATH: string;
+    [key: string]: string;
+  }
+
   export interface Process extends EventEmitter {
     stdout: WritableStream;
     stderr: WritableStream;
@@ -518,10 +523,7 @@ declare namespace NodeJS {
     abort(): void;
     chdir(directory: string): void;
     cwd(): string;
-    env: {
-      PATH: string;
-      [key: string]: string;
-    };
+    env: Env;
     exit(code?: number): void;
     exitCode?: number;
     getgid(): number;

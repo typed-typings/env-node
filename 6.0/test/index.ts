@@ -47,7 +47,7 @@ assert.doesNotThrow(() => {
 namespace events_tests {
   let emitter: events.EventEmitter;
   let event: string;
-  let listener: Function;
+  let listener: () => void;
   let any: any;
 
   {
@@ -95,7 +95,7 @@ fs.writeFile("thebible.txt",
   "Do unto others as you would have them do unto you.",
   assert.ifError);
 
-fs.write(1234, "test");
+fs.write(1234, "test", assert.ifError);
 
 fs.writeFile("Harry Potter",
   "\"You be wizzing, Harry,\" jived Dumbledore.",

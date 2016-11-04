@@ -639,8 +639,12 @@ declare namespace NodeJS {
 declare module "buffer" {
   export var INSPECT_MAX_BYTES: number;
   export var kMaxLength: number;
+
+  export type Encoding = "ascii" | "latin1" | "binary" | "utf8" | "utf-8" | "ucs2" | "ucs-2" | "utf16le" | "utf-16le" | "hex" | "base64";
+
   var BuffType: typeof Buffer;
   var SlowBuffType: typeof SlowBuffer;
+
   export { BuffType as Buffer, SlowBuffType as SlowBuffer };
 }
 
@@ -667,16 +671,24 @@ declare module "events" {
     static listenerCount(emitter: EventEmitter, event: string): number; // deprecated
     static defaultMaxListeners: number;
 
-    addListener(event: string, listener: Function): this;
-    on(event: string, listener: Function): this;
-    once(event: string, listener: Function): this;
-    removeListener(event: string, listener: Function): this;
+    addListener(event: string, listener: (...args: any[]) => void): this;
+    on(event: string, listener: (...args: any[]) => void): this;
+    once(event: string, listener: (...args: any[]) => void): this;
+    removeListener(event: string, listener: (...args: any[]) => void): this;
     removeAllListeners(event?: string): this;
     setMaxListeners(n: number): this;
     getMaxListeners(): number;
-    listeners(event: string): Function[];
     emit(event: string, ...args: any[]): boolean;
-    listenerCount(type: string): number;
+    listeners(event: string): Array<(...args: any[]) => void>;
+    listenerCount(event: string): number;
+  }
+
+  export interface Listener<E extends string, L extends Function> {
+    on(event: E, listener: L): this;
+    once(event: E, listener: L): this;
+    addListener(event: E, listener: L): this;
+    removeListener(event: E, listener: L): this;
+    listeners(event: E): L[];
   }
 }
 
@@ -1202,10 +1214,15 @@ declare module "vm" {
 declare module "child_process" {
   import * as events from "events";
   import * as stream from "stream";
+  import * as buffer from "buffer";
+  import * as net from "net";
 
-  export type BufferEncoding = "ascii" | "utf8" | "utf16le" | "ucs2" | "binary" | "hex";
-
-  export interface ChildProcess extends events.EventEmitter {
+  export class ChildProcess extends events.EventEmitter implements
+    events.Listener<'close', (code: number, signal: string) => void>,
+    events.Listener<'error', (error: Error) => void>,
+    events.Listener<'exit', ((code: number, signal: string | null) => void) | ((code: number | null, signal: string) => void)>,
+    events.Listener<'message', (message: any, sendHandle?: net.Socket | net.Server) => void>,
+    events.Listener<'disconnect', () => void> {
     stdin: stream.Writable;
     stdout: stream.Readable;
     stderr: stream.Readable;
@@ -1227,6 +1244,7 @@ declare module "child_process" {
     gid?: number;
     shell?: boolean | string;
   }
+
   export function spawn(command: string, args?: string[], options?: SpawnOptions): ChildProcess;
 
   export interface ExecOptions {
@@ -1238,17 +1256,11 @@ declare module "child_process" {
     killSignal?: string;
     uid?: number;
     gid?: number;
+    encoding?: buffer.Encoding | 'buffer';
   }
-  export interface ExecOptionsWithStringEncoding extends ExecOptions {
-    encoding: BufferEncoding;
-  }
-  export interface ExecOptionsWithBufferEncoding extends ExecOptions {
-    encoding: string; // specify `null`.
-  }
+
   export function exec(command: string, callback?: (error: Error, stdout: string, stderr: string) => void): ChildProcess;
-  export function exec(command: string, options: ExecOptionsWithStringEncoding, callback?: (error: Error, stdout: string, stderr: string) => void): ChildProcess;
-  // usage. child_process.exec("tsc", {encoding: null as string}, (err, stdout, stderr) => {});
-  export function exec(command: string, options: ExecOptionsWithBufferEncoding, callback?: (error: Error, stdout: Buffer, stderr: Buffer) => void): ChildProcess;
+  export function exec(command: string, options: ExecOptions & { encoding: 'buffer' }, callback?: (error: Error, stdout: Buffer, stderr: Buffer) => void): ChildProcess;
   export function exec(command: string, options: ExecOptions, callback?: (error: Error, stdout: string, stderr: string) => void): ChildProcess;
 
   export interface ExecFileOptions {
@@ -1259,22 +1271,14 @@ declare module "child_process" {
     killSignal?: string;
     uid?: number;
     gid?: number;
+    encoding?: buffer.Encoding | 'buffer';
   }
-  export interface ExecFileOptionsWithStringEncoding extends ExecFileOptions {
-    encoding: BufferEncoding;
-  }
-  export interface ExecFileOptionsWithBufferEncoding extends ExecFileOptions {
-    encoding: string; // specify `null`.
-  }
+
   export function execFile(file: string, callback?: (error: Error, stdout: string, stderr: string) => void): ChildProcess;
-  export function execFile(file: string, options?: ExecFileOptionsWithStringEncoding, callback?: (error: Error, stdout: string, stderr: string) => void): ChildProcess;
-  // usage. child_process.execFile("file.sh", {encoding: null as string}, (err, stdout, stderr) => {});
-  export function execFile(file: string, options?: ExecFileOptionsWithBufferEncoding, callback?: (error: Error, stdout: Buffer, stderr: Buffer) => void): ChildProcess;
+  export function execFile(file: string, options?: ExecFileOptions & { encoding: 'buffer' }, callback?: (error: Error, stdout: Buffer, stderr: Buffer) => void): ChildProcess;
   export function execFile(file: string, options?: ExecFileOptions, callback?: (error: Error, stdout: string, stderr: string) => void): ChildProcess;
   export function execFile(file: string, args?: string[], callback?: (error: Error, stdout: string, stderr: string) => void): ChildProcess;
-  export function execFile(file: string, args?: string[], options?: ExecFileOptionsWithStringEncoding, callback?: (error: Error, stdout: string, stderr: string) => void): ChildProcess;
-  // usage. child_process.execFile("file.sh", ["foo"], {encoding: null as string}, (err, stdout, stderr) => {});
-  export function execFile(file: string, args?: string[], options?: ExecFileOptionsWithBufferEncoding, callback?: (error: Error, stdout: Buffer, stderr: Buffer) => void): ChildProcess;
+  export function execFile(file: string, args?: string[], options?: ExecFileOptions & { encoding: 'buffer' }, callback?: (error: Error, stdout: Buffer, stderr: Buffer) => void): ChildProcess;
   export function execFile(file: string, args?: string[], options?: ExecFileOptions, callback?: (error: Error, stdout: string, stderr: string) => void): ChildProcess;
 
   export interface ForkOptions {
@@ -1286,6 +1290,7 @@ declare module "child_process" {
     uid?: number;
     gid?: number;
   }
+
   export function fork(modulePath: string, args?: string[], options?: ForkOptions): ChildProcess;
 
   export interface SpawnSyncOptions {
@@ -1298,15 +1303,10 @@ declare module "child_process" {
     timeout?: number;
     killSignal?: string;
     maxBuffer?: number;
-    encoding?: string;
     shell?: boolean | string;
+    encoding?: buffer.Encoding | 'buffer';
   }
-  export interface SpawnSyncOptionsWithStringEncoding extends SpawnSyncOptions {
-    encoding: BufferEncoding;
-  }
-  export interface SpawnSyncOptionsWithBufferEncoding extends SpawnSyncOptions {
-    encoding: string; // specify `null`.
-  }
+
   export interface SpawnSyncReturns<T> {
     pid: number;
     output: string[];
@@ -1317,11 +1317,9 @@ declare module "child_process" {
     error: Error;
   }
   export function spawnSync(command: string): SpawnSyncReturns<Buffer>;
-  export function spawnSync(command: string, options?: SpawnSyncOptionsWithStringEncoding): SpawnSyncReturns<string>;
-  export function spawnSync(command: string, options?: SpawnSyncOptionsWithBufferEncoding): SpawnSyncReturns<Buffer>;
+  export function spawnSync(command: string, options?: SpawnSyncOptions & { encoding: 'buffer' }): SpawnSyncReturns<Buffer>;
   export function spawnSync(command: string, options?: SpawnSyncOptions): SpawnSyncReturns<Buffer>;
-  export function spawnSync(command: string, args?: string[], options?: SpawnSyncOptionsWithStringEncoding): SpawnSyncReturns<string>;
-  export function spawnSync(command: string, args?: string[], options?: SpawnSyncOptionsWithBufferEncoding): SpawnSyncReturns<Buffer>;
+  export function spawnSync(command: string, args?: string[], options?: SpawnSyncOptions & { encoding: 'buffer' }): SpawnSyncReturns<Buffer>;
   export function spawnSync(command: string, args?: string[], options?: SpawnSyncOptions): SpawnSyncReturns<Buffer>;
 
   export interface ExecSyncOptions {
@@ -1335,17 +1333,11 @@ declare module "child_process" {
     timeout?: number;
     killSignal?: string;
     maxBuffer?: number;
-    encoding?: string;
+    encoding?: buffer.Encoding | 'buffer';
   }
-  export interface ExecSyncOptionsWithStringEncoding extends ExecSyncOptions {
-    encoding: BufferEncoding;
-  }
-  export interface ExecSyncOptionsWithBufferEncoding extends ExecSyncOptions {
-    encoding: string; // specify `null`.
-  }
+
   export function execSync(command: string): Buffer;
-  export function execSync(command: string, options?: ExecSyncOptionsWithStringEncoding): string;
-  export function execSync(command: string, options?: ExecSyncOptionsWithBufferEncoding): Buffer;
+  export function execSync(command: string, options?: ExecSyncOptions & { encoding: 'buffer' }): Buffer;
   export function execSync(command: string, options?: ExecSyncOptions): Buffer;
 
   export interface ExecFileSyncOptions {
@@ -1358,20 +1350,13 @@ declare module "child_process" {
     timeout?: number;
     killSignal?: string;
     maxBuffer?: number;
-    encoding?: string;
+    encoding?: buffer.Encoding | 'buffer';
   }
-  export interface ExecFileSyncOptionsWithStringEncoding extends ExecFileSyncOptions {
-    encoding: BufferEncoding;
-  }
-  export interface ExecFileSyncOptionsWithBufferEncoding extends ExecFileSyncOptions {
-    encoding: string; // specify `null`.
-  }
+
   export function execFileSync(command: string): Buffer;
-  export function execFileSync(command: string, options?: ExecFileSyncOptionsWithStringEncoding): string;
-  export function execFileSync(command: string, options?: ExecFileSyncOptionsWithBufferEncoding): Buffer;
+  export function execFileSync(command: string, options?: ExecFileSyncOptions & { encoding: 'buffer' }): Buffer;
   export function execFileSync(command: string, options?: ExecFileSyncOptions): Buffer;
-  export function execFileSync(command: string, args?: string[], options?: ExecFileSyncOptionsWithStringEncoding): string;
-  export function execFileSync(command: string, args?: string[], options?: ExecFileSyncOptionsWithBufferEncoding): Buffer;
+  export function execFileSync(command: string, args?: string[], options?: ExecFileSyncOptions & { encoding: 'buffer' }): Buffer;
   export function execFileSync(command: string, args?: string[], options?: ExecFileSyncOptions): Buffer;
 }
 
@@ -1530,7 +1515,11 @@ declare module "dgram" {
 declare module "fs" {
   import * as stream from "stream";
   import * as events from "events";
+  import * as buffer from "buffer";
 
+  /**
+   * Objects returned from `fs.stat()`, `fs.lstat()` and `fs.fstat()` and their synchronous counterparts are of this type.
+   */
   export class Stats {
     isFile(): boolean;
     isDirectory(): boolean;
@@ -1549,281 +1538,600 @@ declare module "fs" {
     size: number;
     blksize: number;
     blocks: number;
+    /**
+     * "Access Time" - Time when file data last accessed. Changed by the `mknod(2)`, `utimes(2)`, and `read(2)` system calls.
+     */
     atime: Date;
+    /**
+     * "Modified Time" - Time when file data last modified. Changed by the `mknod(2)`, `utimes(2)`, and `write(2)` system calls.
+     */
     mtime: Date;
+    /**
+     * "Change Time" - Time when file status was last changed (inode data modification). Changed by the `chmod(2)`, `chown(2)`, `link(2)`, `mknod(2)`, `rename(2)`, `unlink(2)`,` utimes(2)`, `read(2)`, and `write(2)` system calls.
+     */
     ctime: Date;
+    /**
+     * "Birth Time" - Time of file creation. Set once when the file is created. On filesystems where birthtime is not available, this field may instead hold either the `ctime` or `1970-01-01T00:00Z` (ie, unix epoch timestamp `0`). Note that this value may be greater than `atime` or `mtime` in this case. On Darwin and other FreeBSD variants, also set if the `atime` is explicitly set to an earlier value than the current `birthtime` using the `utimes(2)` system call.
+     */
     birthtime: Date;
   }
 
-  export class FSWatcher extends events.EventEmitter {
+  export type WatchListener = (eventType: string, filename?: string) => void;
+
+  /**
+   * Objects returned from fs.watch() are of this type.
+   */
+  export class FSWatcher extends events.EventEmitter implements
+    events.Listener<'change', WatchListener> {
     close(): void;
   }
 
-  export class ReadStream extends stream.Readable {
+  export class ReadStream extends stream.Readable implements
+    events.Listener<'open', (fd: number) => void>,
+    events.Listener<'close', () => void> {
+    bytesRead: number;
+    path: string;
     close(): void;
-    path: string | Buffer;
   }
 
-  export class WriteStream extends stream.Writable {
+  export class WriteStream extends stream.Writable implements
+    events.Listener<'open', (fd: number) => void>,
+    events.Listener<'close', () => void> {
     close(): void;
     bytesWritten: number;
-    path: string | Buffer;
+    path: string;
+  }
+
+  export const F_OK: number;
+  export const R_OK: number;
+  export const W_OK: number;
+  export const X_OK: number;
+
+  /**
+   * Tests a user's permissions for the file or directory specified by `path`. The `mode` argument is an optional integer that specifies the accessibility checks to be performed. The following constants define the possible values of `mode`. It is possible to create a mask consisting of the bitwise OR of two or more values.
+   */
+  export function access(path: string, callback: (err: NodeJS.ErrnoException | null) => void): void;
+  export function access(path: string, mode: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous version of `fs.access()`. This throws if any accessibility checks fail, and does nothing otherwise.
+   */
+  export function accessSync(path: string, mode?: number): void;
+
+  export interface AppendFileOptions {
+    encoding?: buffer.Encoding;
+    mode?: number;
+    flag?: string;
   }
 
   /**
-   * Asynchronous rename.
-   * @param oldPath
-   * @param newPath
-   * @param callback No arguments other than a possible exception are given to the completion callback.
+   * Asynchronously append data to a file, creating the file if it does not yet exist. `data` can be a string or a buffer.
    */
-  export function rename(oldPath: string, newPath: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
+  export function appendFile(file: string | number, data: string | Buffer, callback: (err: NodeJS.ErrnoException | null) => void): void;
+  export function appendFile(file: string | number, data: string | Buffer, options: buffer.Encoding | AppendFileOptions, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
   /**
-   * Synchronous rename
-   * @param oldPath
-   * @param newPath
+   * The synchronous version of `fs.appendFile()`.
    */
-  export function renameSync(oldPath: string, newPath: string): void;
-  export function truncate(path: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function truncate(path: string, len: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function truncateSync(path: string, len?: number): void;
-  export function ftruncate(fd: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function ftruncate(fd: number, len: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function ftruncateSync(fd: number, len?: number): void;
-  export function chown(path: string, uid: number, gid: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function chownSync(path: string, uid: number, gid: number): void;
-  export function fchown(fd: number, uid: number, gid: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function fchownSync(fd: number, uid: number, gid: number): void;
-  export function lchown(path: string, uid: number, gid: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function lchownSync(path: string, uid: number, gid: number): void;
-  export function chmod(path: string, mode: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function chmod(path: string, mode: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
+  export function appendFileSync(file: string | number, data: string | Buffer, options?: AppendFileOptions): void;
+
+  /**
+   * Asynchronous chmod(2).
+   */
+  export function chmod(path: string, mode: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous chmod(2).
+   */
   export function chmodSync(path: string, mode: number): void;
-  export function chmodSync(path: string, mode: string): void;
-  export function fchmod(fd: number, mode: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function fchmod(fd: number, mode: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function fchmodSync(fd: number, mode: number): void;
-  export function fchmodSync(fd: number, mode: string): void;
-  export function lchmod(path: string, mode: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function lchmod(path: string, mode: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function lchmodSync(path: string, mode: number): void;
-  export function lchmodSync(path: string, mode: string): void;
-  export function stat(path: string, callback?: (err: NodeJS.ErrnoException, stats: Stats) => any): void;
-  export function lstat(path: string, callback?: (err: NodeJS.ErrnoException, stats: Stats) => any): void;
-  export function fstat(fd: number, callback?: (err: NodeJS.ErrnoException, stats: Stats) => any): void;
-  export function statSync(path: string): Stats;
-  export function lstatSync(path: string): Stats;
-  export function fstatSync(fd: number): Stats;
-  export function link(srcpath: string, dstpath: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function linkSync(srcpath: string, dstpath: string): void;
-  export function symlink(srcpath: string, dstpath: string, type?: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function symlinkSync(srcpath: string, dstpath: string, type?: string): void;
-  export function readlink(path: string, callback?: (err: NodeJS.ErrnoException, linkString: string) => any): void;
-  export function readlinkSync(path: string): string;
-  export function realpath(path: string, callback?: (err: NodeJS.ErrnoException, resolvedPath: string) => any): void;
-  export function realpath(path: string, cache: { [path: string]: string }, callback: (err: NodeJS.ErrnoException, resolvedPath: string) => any): void;
-  export function realpathSync(path: string, cache?: { [path: string]: string }): string;
-  /*
-   * Asynchronous unlink - deletes the file specified in {path}
-   *
-   * @param path
-   * @param callback No arguments other than a possible exception are given to the completion callback.
+
+  /**
+   * Asynchronous chown(2).
    */
-  export function unlink(path: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  /*
-   * Synchronous unlink - deletes the file specified in {path}
-   *
-   * @param path
+  export function chown(path: string, uid: number, gid: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous chown(2).
    */
-  export function unlinkSync(path: string): void;
-  /*
-   * Asynchronous rmdir - removes the directory specified in {path}
-   *
-   * @param path
-   * @param callback No arguments other than a possible exception are given to the completion callback.
+  export function chownSync(path: string, uid: number, gid: number): void;
+
+  /**
+   * Asynchronous close(2).
    */
-  export function rmdir(path: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  /*
-   * Synchronous rmdir - removes the directory specified in {path}
-   *
-   * @param path
+  export function close(fd: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous close(2).
    */
-  export function rmdirSync(path: string): void;
-  /*
-   * Asynchronous mkdir - creates the directory specified in {path}.  Parameter {mode} defaults to 0777.
-   *
-   * @param path
-   * @param callback No arguments other than a possible exception are given to the completion callback.
-   */
-  export function mkdir(path: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  /*
-   * Asynchronous mkdir - creates the directory specified in {path}.  Parameter {mode} defaults to 0777.
-   *
-   * @param path
-   * @param mode
-   * @param callback No arguments other than a possible exception are given to the completion callback.
-   */
-  export function mkdir(path: string, mode: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  /*
-   * Asynchronous mkdir - creates the directory specified in {path}.  Parameter {mode} defaults to 0777.
-   *
-   * @param path
-   * @param mode
-   * @param callback No arguments other than a possible exception are given to the completion callback.
-   */
-  export function mkdir(path: string, mode: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  /*
-   * Synchronous mkdir - creates the directory specified in {path}.  Parameter {mode} defaults to 0777.
-   *
-   * @param path
-   * @param mode
-   * @param callback No arguments other than a possible exception are given to the completion callback.
-   */
-  export function mkdirSync(path: string, mode?: number): void;
-  /*
-   * Synchronous mkdir - creates the directory specified in {path}.  Parameter {mode} defaults to 0777.
-   *
-   * @param path
-   * @param mode
-   * @param callback No arguments other than a possible exception are given to the completion callback.
-   */
-  export function mkdirSync(path: string, mode?: string): void;
-  /*
-   * Asynchronous mkdtemp - Creates a unique temporary directory. Generates six random characters to be appended behind a required prefix to create a unique temporary directory.
-   *
-   * @param prefix
-   * @param callback The created folder path is passed as a string to the callback's second parameter.
-   */
-  export function mkdtemp(prefix: string, callback?: (err: NodeJS.ErrnoException, folder: string) => void): void;
-  /*
-   * Synchronous mkdtemp - Creates a unique temporary directory. Generates six random characters to be appended behind a required prefix to create a unique temporary directory.
-   *
-   * @param prefix
-   * @returns Returns the created folder path.
-   */
-  export function mkdtempSync(prefix: string): string;
-  export function readdir(path: string, callback?: (err: NodeJS.ErrnoException, files: string[]) => void): void;
-  export function readdirSync(path: string): string[];
-  export function close(fd: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
   export function closeSync(fd: number): void;
-  export function open(path: string, flags: string, callback?: (err: NodeJS.ErrnoException, fd: number) => any): void;
-  export function open(path: string, flags: string, mode: number, callback?: (err: NodeJS.ErrnoException, fd: number) => any): void;
-  export function open(path: string, flags: string, mode: string, callback?: (err: NodeJS.ErrnoException, fd: number) => any): void;
-  export function openSync(path: string, flags: string, mode?: number): number;
-  export function openSync(path: string, flags: string, mode?: string): number;
-  export function utimes(path: string, atime: number, mtime: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function utimes(path: string, atime: Date, mtime: Date, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function utimesSync(path: string, atime: number, mtime: number): void;
-  export function utimesSync(path: string, atime: Date, mtime: Date): void;
-  export function futimes(fd: number, atime: number, mtime: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function futimes(fd: number, atime: Date, mtime: Date, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function futimesSync(fd: number, atime: number, mtime: number): void;
-  export function futimesSync(fd: number, atime: Date, mtime: Date): void;
-  export function fsync(fd: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
-  export function fsyncSync(fd: number): void;
-  export function write(fd: number, buffer: Buffer, offset: number, length: number, position: number, callback?: (err: NodeJS.ErrnoException, written: number, buffer: Buffer) => void): void;
-  export function write(fd: number, buffer: Buffer, offset: number, length: number, callback?: (err: NodeJS.ErrnoException, written: number, buffer: Buffer) => void): void;
-  export function write(fd: number, data: any, callback?: (err: NodeJS.ErrnoException, written: number, str: string) => void): void;
-  export function write(fd: number, data: any, offset: number, callback?: (err: NodeJS.ErrnoException, written: number, str: string) => void): void;
-  export function write(fd: number, data: any, offset: number, encoding: string, callback?: (err: NodeJS.ErrnoException, written: number, str: string) => void): void;
-  export function writeSync(fd: number, buffer: Buffer, offset: number, length: number, position?: number): number;
-  export function writeSync(fd: number, data: any, position?: number, enconding?: string): number;
-  export function read(fd: number, buffer: Buffer, offset: number, length: number, position: number, callback?: (err: NodeJS.ErrnoException, bytesRead: number, buffer: Buffer) => void): void;
-  export function readSync(fd: number, buffer: Buffer, offset: number, length: number, position: number): number;
-  /*
-   * Asynchronous readFile - Asynchronously reads the entire contents of a file.
-   *
-   * @param fileName
-   * @param encoding
-   * @param callback - The callback is passed two arguments (err, data), where data is the contents of the file.
-   */
-  export function readFile(filename: string, encoding: string, callback: (err: NodeJS.ErrnoException, data: string) => void): void;
-  /*
-   * Asynchronous readFile - Asynchronously reads the entire contents of a file.
-   *
-   * @param fileName
-   * @param options An object with optional {encoding} and {flag} properties.  If {encoding} is specified, readFile returns a string; otherwise it returns a Buffer.
-   * @param callback - The callback is passed two arguments (err, data), where data is the contents of the file.
-   */
-  export function readFile(filename: string, options: { encoding: string; flag?: string; }, callback: (err: NodeJS.ErrnoException, data: string) => void): void;
-  /*
-   * Asynchronous readFile - Asynchronously reads the entire contents of a file.
-   *
-   * @param fileName
-   * @param options An object with optional {encoding} and {flag} properties.  If {encoding} is specified, readFile returns a string; otherwise it returns a Buffer.
-   * @param callback - The callback is passed two arguments (err, data), where data is the contents of the file.
-   */
-  export function readFile(filename: string, options: { flag?: string; }, callback: (err: NodeJS.ErrnoException, data: Buffer) => void): void;
-  /*
-   * Asynchronous readFile - Asynchronously reads the entire contents of a file.
-   *
-   * @param fileName
-   * @param callback - The callback is passed two arguments (err, data), where data is the contents of the file.
-   */
-  export function readFile(filename: string, callback: (err: NodeJS.ErrnoException, data: Buffer) => void): void;
-  /*
-   * Synchronous readFile - Synchronously reads the entire contents of a file.
-   *
-   * @param fileName
-   * @param encoding
-   */
-  export function readFileSync(filename: string, encoding: string): string;
-  /*
-   * Synchronous readFile - Synchronously reads the entire contents of a file.
-   *
-   * @param fileName
-   * @param options An object with optional {encoding} and {flag} properties.  If {encoding} is specified, readFileSync returns a string; otherwise it returns a Buffer.
-   */
-  export function readFileSync(filename: string, options: { encoding: string; flag?: string; }): string;
-  /*
-   * Synchronous readFile - Synchronously reads the entire contents of a file.
-   *
-   * @param fileName
-   * @param options An object with optional {encoding} and {flag} properties.  If {encoding} is specified, readFileSync returns a string; otherwise it returns a Buffer.
-   */
-  export function readFileSync(filename: string, options?: { flag?: string; }): Buffer;
-  export function writeFile(filename: string, data: any, callback?: (err: NodeJS.ErrnoException) => void): void;
-  export function writeFile(filename: string, data: any, options: { encoding?: string; mode?: number; flag?: string; }, callback?: (err: NodeJS.ErrnoException) => void): void;
-  export function writeFile(filename: string, data: any, options: { encoding?: string; mode?: string; flag?: string; }, callback?: (err: NodeJS.ErrnoException) => void): void;
-  export function writeFileSync(filename: string, data: any, options?: { encoding?: string; mode?: number; flag?: string; }): void;
-  export function writeFileSync(filename: string, data: any, options?: { encoding?: string; mode?: string; flag?: string; }): void;
-  export function appendFile(filename: string, data: any, options: { encoding?: string; mode?: number; flag?: string; }, callback?: (err: NodeJS.ErrnoException) => void): void;
-  export function appendFile(filename: string, data: any, options: { encoding?: string; mode?: string; flag?: string; }, callback?: (err: NodeJS.ErrnoException) => void): void;
-  export function appendFile(filename: string, data: any, callback?: (err: NodeJS.ErrnoException) => void): void;
-  export function appendFileSync(filename: string, data: any, options?: { encoding?: string; mode?: number; flag?: string; }): void;
-  export function appendFileSync(filename: string, data: any, options?: { encoding?: string; mode?: string; flag?: string; }): void;
-  export function watchFile(filename: string, listener: (curr: Stats, prev: Stats) => void): void;
-  export function watchFile(filename: string, options: { persistent?: boolean; interval?: number; }, listener: (curr: Stats, prev: Stats) => void): void;
-  export function unwatchFile(filename: string, listener?: (curr: Stats, prev: Stats) => void): void;
-  export function watch(filename: string, listener?: (event: string, filename: string) => any): FSWatcher;
-  export function watch(filename: string, options: { persistent?: boolean; }, listener?: (event: string, filename: string) => any): FSWatcher;
-  export function exists(path: string, callback?: (exists: boolean) => void): void;
-  export function existsSync(path: string): boolean;
-  /** Constant for fs.access(). File is visible to the calling process. */
-  export var F_OK: number;
-  /** Constant for fs.access(). File can be read by the calling process. */
-  export var R_OK: number;
-  /** Constant for fs.access(). File can be written by the calling process. */
-  export var W_OK: number;
-  /** Constant for fs.access(). File can be executed by the calling process. */
-  export var X_OK: number;
-  /** Tests a user's permissions for the file specified by path. */
-  export function access(path: string, callback: (err: NodeJS.ErrnoException) => void): void;
-  export function access(path: string, mode: number, callback: (err: NodeJS.ErrnoException) => void): void;
-  /** Synchronous version of fs.access. This throws if any accessibility checks fail, and does nothing otherwise. */
-  export function accessSync(path: string, mode?: number): void;
-  export function createReadStream(path: string, options?: {
+
+  export interface ReadStreamOptions {
     flags?: string;
-    encoding?: string;
+    encoding?: buffer.Encoding;
     fd?: number;
     mode?: number;
     autoClose?: boolean;
-  }): ReadStream;
-  export function createWriteStream(path: string, options?: {
+    start?: number;
+    end?: number;
+  }
+
+  /**
+   * Returns a new ReadStream object.
+   *
+   * Be aware that, unlike the default value set for `highWaterMark` on a readable stream (16 kb), the stream returned by this method has a default value of 64 kb for the same parameter.
+   */
+  export function createReadStream(path: string, options?: ReadStreamOptions): ReadStream;
+
+  export interface WriteStreamOptions {
     flags?: string;
-    encoding?: string;
+    defaultEncoding?: buffer.Encoding;
     fd?: number;
     mode?: number;
-  }): WriteStream;
+    autoClose?: boolean;
+    start: number;
+    end: number;
+  }
+
+  /**
+   * Returns a new WriteStream object.
+   */
+  export function createWriteStream(path: string, options?: WriteStreamOptions): WriteStream;
+
+  /**
+   * Test whether or not the given path exists by checking with the file system. Then call the `callback` argument with either true or false.
+   *
+   * @deprecated
+   */
+  export function exists(path: string, callback: (exists: boolean) => void): void;
+
+  /**
+   * Synchronous version of `fs.exists()`. Returns true if the file exists, false otherwise.
+   */
+  export function existsSync(path: string): boolean;
+
+  /**
+   * Asynchronous fchmod(2).
+   */
+  export function fchmod(fd: number, mode: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous fchmod(2).
+   */
+  export function fchmodSync(fd: number, mode: number): void;
+
+  /**
+   * Asynchronous fchown(2).
+   */
+  export function fchown(fd: number, uid: number, gid: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous fchown(2).
+   */
+  export function fchownSync(fd: number, uid: number, gid: number): void;
+
+  /**
+   * Asynchronous fdatasync(2).
+   */
+  export function fdatasync(fd: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous fdatasync(2).
+   */
+  export function fdatasyncSync(fd: number): void;
+
+  /**
+   * Asynchronous fstat(2).
+   */
+  export function fstat(fd: number, callback: (err: NodeJS.ErrnoException | null, stats: Stats) => void): void;
+
+  /**
+   * Synchronous fstat(2).
+   */
+  export function fstatSync(fd: number): Stats;
+
+  /**
+   * Asynchronous fsync(2).
+   */
+  export function fsync(fd: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous fsync(2).
+   */
+  export function fsyncSync(fd: number): void;
+
+  /**
+   * Asynchronous ftruncate(2).
+   *
+   * If the file referred to by the file descriptor was larger than `len` bytes, only the first `len` bytes will be retained in the file.
+   *
+   * If the file previously was shorter than `len` bytes, it is extended, and the extended part is filled with null bytes ('\0').
+   */
+  export function ftruncate(fd: number, len: number | null | undefined, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous ftruncate(2).
+   */
+  export function ftruncateSync(fd: number, len?: number | null): void;
+
+  /**
+   * Change the file timestamps of a file referenced by the supplied file descriptor.
+   */
+  export function futimes(fd: number, atime: number, mtime: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous version of `fs.futimes()`.
+   */
+  export function futimesSync(fd: number, atime: number, mtime: number): void;
+
+  /**
+   * Asynchronous lchmod(2).
+   *
+   * Only available on Mac OS X.
+   *
+   * @deprecated
+   */
+  export function lchmod(path: string, mode: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous lchmod(2).
+   *
+   * @deprecated
+   */
+  export function lchmodSync(path: string, mode: number): void;
+
+  /**
+   * Asynchronous lchown(2).
+   *
+   * @deprecated
+   */
+  export function lchown(path: string, uid: number, gid: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous lchown(2).
+   *
+   * @deprecated
+   */
+  export function lchownSync(path: string, uid: number, gid: number): void;
+
+  /**
+   * Asynchronous link(2).
+   */
+  export function link(existingPath: string, newPath: string, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous link(2).
+   */
+  export function linkSync(existingPath: string, newPath: string): void;
+
+  /**
+   * Asynchronous lstat(2). `lstat()` is identical to `stat()`, except that if `path` is a symbolic link, then the link itself is stat-ed, not the file that it refers to.
+   */
+  export function lstat(path: string, callback: (err: NodeJS.ErrnoException | null, stats: Stats) => void): void;
+
+  /**
+   * Synchronous lstat(2).
+   */
+  export function lstatSync(path: string): Stats;
+
+  /**
+   * Asynchronous mkdir(2). `mode` defaults to `0o777`.
+   */
+  export function mkdir(path: string, callback: (err: NodeJS.ErrnoException | null) => void): void;
+  export function mkdir(path: string, mode: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous mkdir(2).
+   */
+  export function mkdirSync(path: string, mode?: number): void;
+
+  /**
+   * Asynchronous file open. See open(2). `flags` can be:
+   *
+   * 'r' - Open file for reading. An exception occurs if the file does not exist.
+   *
+   * 'r+' - Open file for reading and writing. An exception occurs if the file does not exist.
+   *
+   * 'rs+' - Open file for reading and writing in synchronous mode. Instructs the operating system to bypass the local file system cache.
+   *
+   * This is primarily useful for opening files on NFS mounts as it allows you to skip the potentially stale local cache. It has a very real impact on I/O performance so don't use this flag unless you need it.
+   *
+   * Note that this doesn't turn `fs.open()` into a synchronous blocking call. If that's what you want then you should be using `fs.openSync()`
+   *
+   * 'w' - Open file for writing. The file is created (if it does not exist) or truncated (if it exists).
+   *
+   * 'wx' - Like `'w'` but fails if `path` exists.
+   *
+   * 'w+' - Open file for reading and writing. The file is created (if it does not exist) or truncated (if it exists).
+   *
+   * 'wx+' - Like `'w+'` but fails if `path` exists.
+   *
+   * 'a' - Open file for appending. The file is created if it does not exist.
+   *
+   * 'ax' - Like 'a' but fails if `path` exists.
+   *
+   * 'a+' - Open file for reading and appending. The file is created if it does not exist.
+   *
+   * 'ax+' - Like 'a+' but fails if `path` exists.
+   *
+   * `mode` sets the file mode (permission and sticky bits), but only if the file was created. It defaults to `0666`, readable and writable.
+   */
+  export function open(path: string, flags: string | number, callback: (err: NodeJS.ErrnoException | null, fd: number) => void): void;
+  export function open(path: string, flags: string | number, mode: number, callback: (err: NodeJS.ErrnoException | null, fd: number) => void): void;
+
+  /**
+   * Synchronous version of `fs.open()`.
+   */
+  export function openSync(path: string, flags: string | number, mode?: number): number;
+
+  /**
+   * Read data from the file specified by fd.
+   *
+   * @param buffer is the buffer that the data will be written to.
+   * @param offset is the offset in the buffer to start writing at.
+   * @param length is an integer specifying the number of bytes to read.
+   * @param position is an integer specifying where to begin reading from in the file. If position is null, data will be read from the current file position.
+   */
+  export function read(fd: number, buffer: string | Buffer, offset: number, length: number, position: number, callback: (err: NodeJS.ErrnoException | null, bytesRead: number, buffer: Buffer) => void): void;
+
+  export interface ReaddirOptions {
+    encoding?: buffer.Encoding;
+  }
+
+  /**
+   * Asynchronous readdir(3). Reads the contents of a directory.
+   *
+   * @param files is an array of the names of the files in the directory excluding '.' and '..'.
+   */
+  export function readdir(path: string, callback: (err: NodeJS.ErrnoException | null, files: string[]) => void): void;
+  export function readdir(path: string, options: buffer.Encoding | ReaddirOptions, callback: (err: NodeJS.ErrnoException | null, files: string[]) => void): void;
+
+  /**
+   * Synchronous readdir(3). Returns an array of filenames excluding '.' and '..'.
+   */
+  export function readdirSync(path: string): string[];
+  export function readdirSync(path: string, options: buffer.Encoding | ReaddirOptions): string[];
+
+  export interface ReadFileOptions {
+    encoding?: buffer.Encoding;
+    flag?: string;
+  }
+
+  /**
+   * Asynchronously reads the entire contents of a file.
+   */
+  export function readFile(filename: string, callback: (err: NodeJS.ErrnoException | null, data: Buffer) => void): void;
+  export function readFile(filename: string, options: buffer.Encoding | (ReadFileOptions & { encoding: buffer.Encoding }), callback: (err: NodeJS.ErrnoException | null, data: string) => void): void;
+  export function readFile(filename: string, options: ReadFileOptions, callback: (err: NodeJS.ErrnoException | null, data: Buffer) => void): void;
+
+  /**
+   * Synchronous version of `fs.readFile`.
+   */
+  export function readFileSync(filename: string): Buffer;
+  export function readFileSync(filename: string, options: buffer.Encoding | (ReadFileOptions & { encoding: buffer.Encoding })): string;
+  export function readFileSync(filename: string, options: ReadFileOptions): Buffer;
+
+  export interface ReadlinkOptions {
+    encoding?: buffer.Encoding;
+  }
+
+  /**
+   * Asynchronous readlink(2).
+   */
+  export function readlink(path: string, callback: (err: NodeJS.ErrnoException | null, linkString: string) => void): void;
+  export function readlink(path: string, options: buffer.Encoding | ReadlinkOptions, callback: (err: NodeJS.ErrnoException | null, linkString: Buffer) => void): void;
+
+  /**
+   * Synchronous readlink(2).
+   */
+  export function readlinkSync(path: string): string;
+  export function readlinkSync(path: string, options: buffer.Encoding | ReadlinkOptions): string;
+
+  /**
+   * Synchronous version of `fs.read()`.
+   */
+  export function readSync(fd: number, buffer: string | Buffer, offset: number, length: number, position: number): number;
+
+  export interface RealpathOptions {
+    encoding?: buffer.Encoding;
+  }
+
+  /**
+   * Asynchronous realpath(3). May use `process.cwd` to resolve relative paths.
+   *
+   * Only paths that can be converted to UTF8 strings are supported.
+   */
+  export function realpath(path: string, callback: (err: NodeJS.ErrnoException | null, resolvedPath: string) => void): void;
+  export function realpath(path: string, options: buffer.Encoding | RealpathOptions, callback: (err: NodeJS.ErrnoException | null, resolvedPath: Buffer) => void): void;
+
+  /**
+   * Synchronous realpath(3). Returns the resolved path.
+   *
+   * Only paths that can be converted to UTF8 strings are supported.
+   */
+  export function realpathSync(path: string): string;
+  export function realpathSync(path: string, options: buffer.Encoding | RealpathOptions): string;
+
+  /**
+   * Asynchronous rename(2).
+   */
+  export function rename(oldPath: string, newPath: string, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous rename(2).
+   */
+  export function renameSync(oldPath: string, newPath: string): void;
+
+  /**
+   * Asynchronous rmdir(2).
+   */
+  export function rmdir(path: string, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous rmdir(2).
+   */
+  export function rmdirSync(path: string): void;
+
+  /**
+   * Asynchronous stat(2).
+   *
+   * In case of an error, the `err.code` will be one of Common System Errors.
+   *
+   * Using `fs.stat()` to check for the existence of a file before calling `fs.open()`, `fs.readFile()` or `fs.writeFile()` is not recommended. Instead, user code should open/read/write the file directly and handle the error raised if the file is not available.
+   *
+   * To check if a file exists without manipulating it afterwards, `fs.access()` is recommended.
+   */
+  export function stat(path: string, callback: (err: NodeJS.ErrnoException | null, stats: Stats) => void): void;
+
+  /**
+   * Synchronous stat(2).
+   */
+  export function statSync(path: string): Stats;
+
+  /**
+   * Asynchronous symlink(2). The type argument is only available on Windows (ignored on other platforms). Note that Windows junction points require the destination path to be absolute. When using `'junction'`, the target argument will automatically be normalized to absolute path.
+   */
+  export function symlink(target: string, path: string, callback: (err: NodeJS.ErrnoException | null) => void): void;
+  export function symlink(target: string, path: string, type: 'dir' | 'file' | 'junction', callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous symlink(2).
+   */
+  export function symlinkSync(target: string, path: string, type?: 'dir' | 'file' | 'junction'): void;
+
+  /**
+   * Asynchronous truncate(2).
+   */
+  export function truncate(path: string, len: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous truncate(2).
+   */
+  export function truncateSync(path: string, len?: number): void;
+
+  /**
+   * Asynchronous unlink(2).
+   */
+  export function unlink(path: string, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous unlink(2).
+   */
+  export function unlinkSync(path: string): void;
+
+  /**
+   * Stop watching for changes on `filename`. If `listener` is specified, only that particular listener is removed. Otherwise, _all_ listeners are removed and you have effectively stopped watching `filename`.
+   *
+   * Calling `fs.unwatchFile()` with a filename that is not being watched is a no-op, not an error.
+   *
+   * Note: `fs.watch()` is more efficient than `fs.watchFile()` and `fs.unwatchFile()`. `fs.watch()` should be used instead of `fs.watchFile()` and `fs.unwatchFile()` when possible.
+   */
+  export function unwatchFile(filename: string, listener?: WatchListener): void;
+
+  /**
+   * Change file timestamps of the file referenced by the supplied path.
+   *
+   * Note: the arguments `atime` and `mtime` of the following related functions follow these rules:
+   *
+   * - The value should be a Unix timestamp in seconds. For example, `Date.now()` returns milliseconds, so it should be divided by 1000 before passing it in.
+   * If the value is a numeric string like `'123456789'`, the value will get converted to the corresponding number.
+   * If the value is `NaN` or `Infinity`, the value will get converted to `Date.now() / 1000`.
+   */
+  export function utimes(path: string, atime: number, mtime: number, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * Synchronous version of `fs.utimes()`.
+   */
+  export function utimesSync(path: string, atime: number, mtime: number): void;
+
+  export interface WatchOptions {
+    /**
+     * Indicates whether the process should continue to run as long as files are being watched. default = `true`.
+     */
+    persistent?: boolean;
+    /**
+     * Indicates whether all subdirectories should be watched, or only the current directory. The applies when a directory is specified, and only on supported platforms (See Caveats). default = `false`.
+     */
+    recursive?: boolean;
+    /**
+     * Specifies the character encoding to be used for the filename passed to the listener. default = `'utf8'`.
+     */
+    encoding?: buffer.Encoding;
+  }
+
+  /**
+   * Watch for changes on `filename`, where `filename` is either a file or a directory. The returned object is a `fs.FSWatcher`.
+   *
+   * Please note the listener callback is attached to the `'change'` event fired by `fs.FSWatcher`, but they are not the same thing.
+   */
+  export function watch(filename: string): FSWatcher;
+  export function watch(filename: string, options: buffer.Encoding | WatchOptions): FSWatcher;
+  export function watch(filename: string, listener: WatchListener): FSWatcher;
+  export function watch(filename: string, options: buffer.Encoding | WatchOptions, listener: WatchListener): FSWatcher;
+
+  export interface WatchFileOptions {
+    /**
+     * Indicates whether the process should continue to run as long as files are being watched
+     */
+    persistent: boolean;
+    /**
+     * Indicates how often the target should be polled in milliseconds. The default is `5007`.
+     */
+    interval: number;
+  }
+
+  /**
+   * Watch for changes on filename. The callback listener will be called each time the file is accessed.
+   *
+   * Note: when an `fs.watchFile` operation results in an `ENOENT` error, it will invoke the listener once, with all the fields zeroed (or, for dates, the Unix Epoch). In Windows, `blksize` and `blocks` fields will be `undefined`, instead of zero. If the file is created later on, the listener will be called again, with the latest stat objects.
+   *
+   * Note: `fs.watch()` is more efficient than `fs.watchFile` and `fs.unwatchFile`. `fs.watch` should be used instead of `fs.watchFile` and `fs.unwatchFile` when possible.
+   */
+  export function watchFile(filename: string, listener: (curr: Stats, prev: Stats) => void): void;
+  export function watchFile(filename: string, options: WatchFileOptions, listener: (curr: Stats, prev: Stats) => void): void;
+
+  /**
+   * Write `buffer` to the file specified by `fd`.
+   *
+   * `offset` and `length` determine the part of the buffer to be written.
+   *
+   * `position` refers to the offset from the beginning of the file where this data should be written. If `typeof position !== 'number'`, the data will be written at the current position. See pwrite(2).
+   *
+   * Note that it is unsafe to use `fs.write` multiple times on the same file without waiting for the callback. For this scenario, `fs.createWriteStream` is strongly recommended.
+   *
+   * On Linux, positional writes don't work when the file is opened in append mode. The kernel ignores the position argument and always appends the data to the end of the file.
+   */
+  export function write(fd: number, buffer: string | Buffer, offset: number, length: number, callback: (err: NodeJS.ErrnoException | null, written: number, buffer: Buffer) => void): void;
+  export function write(fd: number, buffer: string | Buffer, offset: number, length: number, position: number, callback: (err: NodeJS.ErrnoException | null, written: number, buffer: Buffer) => void): void;
+  export function write(fd: number, data: string | Buffer, callback: (err: NodeJS.ErrnoException | null, written: number, string: string) => void): void;
+  export function write(fd: number, data: string | Buffer, position: number, callback: (err: NodeJS.ErrnoException | null, written: number, string: string) => void): void;
+  export function write(fd: number, data: string | Buffer, position: number, encoding: buffer.Encoding, callback: (err: NodeJS.ErrnoException | null, written: number, string: string) => void): void;
+
+  export interface WriteFileOptions {
+    encoding?: buffer.Encoding;
+    mode?: number;
+    flag?: string;
+  }
+
+  /**
+   * Asynchronously writes data to a file, replacing the file if it already exists.
+   *
+   * Note that it is unsafe to use `fs.writeFile` multiple times on the same file without waiting for the callback. For this scenario, `fs.createWriteStream` is strongly recommended.
+   *
+   * Note: If a file descriptor is specified as the `file`, it will not be closed automatically.
+   */
+  export function writeFile(file: string | number, data: string | Buffer, callback: (err: NodeJS.ErrnoException | null) => void): void;
+  export function writeFile(file: string | number, data: string | Buffer, options: buffer.Encoding | WriteFileOptions, callback: (err: NodeJS.ErrnoException | null) => void): void;
+
+  /**
+   * The synchronous version of `fs.writeFile()`.
+   */
+  export function writeFileSync(file: string | number, data: string | Buffer, options?: buffer.Encoding | WriteFileOptions): void;
+
+  /**
+   * Synchronous `fs.write`.
+   */
+  export function writeSync(fd: number, buffer: string | Buffer, offset: number, length: number, position?: number): void;
+  export function writeSync(fd: number, data: string | Buffer, position?: number, encoding?: buffer.Encoding): void;
 }
 
 declare module "path" {

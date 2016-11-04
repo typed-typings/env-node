@@ -655,15 +655,13 @@ declare module "https" {
     rejectUnauthorized?: boolean;
   }
 
-  export interface Agent {
-    maxSockets: number;
-    sockets: any;
-    requests: any;
+  export interface AgentOptions extends http.AgentOptions {
+    maxCachedSessions?: number;
   }
 
-  export var Agent: {
-    new (options?: RequestOptions): Agent;
-  };
+  export class Agent extends http.Agent {
+    constructor (options?: AgentOptions);
+  }
 
   export interface Server extends tls.Server { }
   export function createServer(options: ServerOptions, requestListener?: Function): Server;

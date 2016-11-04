@@ -1087,16 +1087,16 @@ declare module "https" {
     secureProtocol?: string;
   }
 
-  export interface Agent extends http.Agent { }
-
   export interface AgentOptions extends http.AgentOptions {
     maxCachedSessions?: number;
   }
 
-  export var Agent: {
-    new (options?: AgentOptions): Agent;
-  };
-  export interface Server extends tls.Server { }
+  export class Agent extends http.Agent {
+    constructor(options?: AgentOptions);
+  }
+
+  export class Server extends tls.Server {}
+
   export function createServer(options: ServerOptions, requestListener?: Function): Server;
   export function request(options: string | RequestOptions, callback?: (res: http.IncomingMessage) => void): http.ClientRequest;
   export function get(options: string | RequestOptions, callback?: (res: http.IncomingMessage) => void): http.ClientRequest;

@@ -650,7 +650,7 @@ declare module "https" {
     key?: string | Buffer;
     passphrase?: string;
     cert?: string | Buffer;
-    ca?: string | Buffer | Array<string | Buffer>;
+    ca?: string | Buffer | string[] | Buffer[];
     ciphers?: string;
     rejectUnauthorized?: boolean;
   }
@@ -886,7 +886,9 @@ declare module "dns" {
 declare module "net" {
   import stream = require("stream");
 
-  export interface Socket extends stream.Duplex {
+  export class Socket extends stream.Duplex {
+    constructor(options?: { fd?: string; type?: string; allowHalfOpen?: boolean; });
+
     // Extended base methods
     write(buffer: Buffer): boolean;
     write(buffer: Buffer, cb?: Function): boolean;
@@ -922,19 +924,16 @@ declare module "net" {
     end(data?: any, encoding?: string): void;
   }
 
-  export var Socket: {
-    new (options?: { fd?: string; type?: string; allowHalfOpen?: boolean; }): Socket;
-  };
-
-  export interface Server extends Socket {
-    listen(port: number, host?: string, backlog?: number, listeningListener?: Function): Server;
-    listen(path: string, listeningListener?: Function): Server;
-    listen(handle: any, listeningListener?: Function): Server;
-    close(callback?: Function): Server;
+  export class Server extends Socket {
+    listen(port: number, host?: string, backlog?: number, listeningListener?: Function): this;
+    listen(path: string, listeningListener?: Function): this;
+    listen(handle: any, listeningListener?: Function): this;
+    close(callback?: Function): this;
     address(): { port: number; family: string; address: string; };
     maxConnections: number;
     connections: number;
   }
+
   export function createServer(connectionListener?: (socket: Socket) => void): Server;
   export function createServer(options?: { allowHalfOpen?: boolean; }, connectionListener?: (socket: Socket) => void): Server;
   export function connect(options: { port: number, host?: string, localAddress?: string, allowHalfOpen?: boolean; }, connectionListener?: Function): Socket;
@@ -1595,87 +1594,247 @@ declare module "string_decoder" {
 }
 
 declare module "tls" {
-  import crypto = require("crypto");
-  import net = require("net");
-  import stream = require("stream");
+  import * as crypto from "crypto";
+  import * as net from "net";
+  import * as stream from "stream";
 
-  var CLIENT_RENEG_LIMIT: number;
-  var CLIENT_RENEG_WINDOW: number;
+  export var CLIENT_RENEG_LIMIT: number;
+  export var CLIENT_RENEG_WINDOW: number;
+  export var SLAB_BUFFER_SIZE: number;
+  export var DEFAULT_CIPHERS: string;
+  export var DEFAULT_ECDH_CURVE: string;
 
-  export interface TlsOptions {
-    pfx?: string | Buffer;
-    key?: string | Buffer;
-    passphrase?: string;
-    cert?: string | Buffer;
-    ca?: string | Buffer | Array<string | Buffer>;
-    crl?: string | string[];
-    ciphers?: string;
-    honorCipherOrder?: any;
-    requestCert?: boolean;
-    rejectUnauthorized?: boolean;
-    NPNProtocols?: Array<string | Buffer>;
-    SNICallback?: (servername: string) => any;
-  }
-
-  export interface ConnectionOptions {
-    host?: string;
-    port?: number | string;
-    socket?: net.Socket;
-    pfx?: string | Buffer;
-    key?: string | Buffer;
-    passphrase?: string;
-    cert?: string | Buffer;
-    ca?: string | Buffer | Array<string | Buffer>;
-    rejectUnauthorized?: boolean;
-    NPNProtocols?: Array<string | Buffer>;
-    servername?: string;
-  }
-
-  export interface Server extends net.Server {
-    // Extended base methods
-    listen(port: number, host?: string, backlog?: number, listeningListener?: Function): Server;
-    listen(path: string, listeningListener?: Function): Server;
-    listen(handle: any, listeningListener?: Function): Server;
-
-    listen(port: number, host?: string, callback?: Function): Server;
-    close(): Server;
-    address(): { port: number; family: string; address: string; };
-    addContext(hostName: string, credentials: {
-      key: string;
-      cert: string;
-      ca: string;
-    }): void;
+  export class Server extends net.Server {
+    /**
+     * Add secure context that will be used if client request's SNI hostname is matching passed `hostname` (wildcards can be used). `credentials` can contain `key`, `cert` and `ca`.
+     */
+    addContext(hostName: string, credentials: { key: string, cert: string, ca: string }): void;
+    /**
+     * Set this property to reject connections when the server's connection count gets high.
+     */
     maxConnections: number;
+    /**
+     * Returns the current number of concurrent connections on the server.
+     */
     connections: number;
   }
 
-  export interface ClearTextStream extends stream.Duplex {
+  export interface Certificate {
+    /**
+     * Country code.
+     */
+    C: string;
+    /**
+     * Street.
+     */
+    ST: string;
+    /**
+     * Locality.
+     */
+    L: string;
+    /**
+     * Organization.
+     */
+    O: string;
+    /**
+     * Organizational unit.
+     */
+    OU: string;
+    /**
+     * Common name.
+     */
+    CN: string;
+  }
+
+  export interface Cipher {
+    /**
+     * The cipher name.
+     */
+    name: string;
+    /**
+     * SSL/TLS protocol version.
+     */
+    version: string;
+  }
+
+  export interface PeerCertificate {
+    subject: Certificate;
+    issuerInfo: Certificate;
+    issuer: Certificate;
+    raw: Buffer;
+    valid_from: string;
+    valid_to: string;
+    fingerprint: string;
+    serialNumber: string;
+  }
+
+  export class CleartextStream extends stream.Duplex {
+    /**
+     * Returns `true` if the peer certificate was signed by one of the CAs specified when creating the `tls.TLSSocket` instance, otherwise `false`.
+     */
     authorized: boolean;
-    authorizationError: Error;
-    getPeerCertificate(): any;
-    getCipher: {
-      name: string;
-      version: string;
-    };
-    address: {
-      port: number;
-      family: string;
-      address: string;
-    };
+    /**
+     * Returns the reason why the peer's certificate was not been verified. This property is set only when `tlsSocket.authorized === false`.
+     */
+    authorizationError?: Error;
+    /**
+     * Returns an object representing the cipher name and the SSL/TLS protocol version that first defined the cipher.
+     */
+    getCipher(): Cipher;
+    /**
+     * Returns an object representing the peer's certificate. The returned object has some properties corresponding to the fields of the certificate.
+     *
+     * @param detailed Specify `true` to request that the full certificate chain with the `issuer` property be returned; false to return only the top certificate without the `issuer` property.
+     */
+    getPeerCertificate(detailed?: boolean): PeerCertificate;
+    /**
+     * Returns the bound address, the address family name and port of the underlying socket as reported by the operating system. Returns an object with three properties, e.g. `{ port: 12346, family: 'IPv4', address: '127.0.0.1' }`.
+     */
+    address(): { port: number; family: string; address: string; };
+    /**
+     * Returns the string representation of the remote IP address. For example, `'74.125.127.100'` or `'2001:4860:a005::68'`.
+     */
     remoteAddress: string;
+    /**
+     * The numeric representation of the remote port. For example, 443.
+     */
     remotePort: number;
   }
 
-  export interface SecurePair {
-    encrypted: any;
-    cleartext: any;
+  export interface ConnectOptions {
+    /**
+     * Host the client should connect to.
+     */
+    host?: string;
+    /**
+     * Port the client should connect to.
+     */
+    port?: number | string;
+    /**
+     * Establish secure connection on a given socket rather than creating a new socket. If this option is specified, `host` and `port` are ignored.
+     */
+    socket?: net.Socket;
+    /**
+     * A `string` or `Buffer` containing the private key, certificate, and CA certs of the client in PFX or PKCS12 format.
+     */
+    pfx?: string | Buffer;
+    /**
+     *  A string or `Buffer` containing the private key of the client in PEM format.
+     */
+    key?: string | Buffer;
+    /**
+     * A string containing the passphrase for the private key or pfx.
+     */
+    passphrase?: string;
+    /**
+     * A string or `Buffer` containing the certificate key of the client in PEM format.
+     */
+    cert?: string | Buffer;
+    /**
+     * A string or `Buffer` of trusted certificates in PEM format. If this is omitted several well known "root" CAs (like VeriSign) will be used. These are used to authorize connections.
+     */
+    ca?: string | Buffer;
+    /**
+     * If true, the server certificate is verified against the list of supplied CAs. An `'error'` event is emitted if verification fails; `err.code` contains the OpenSSL error code. Defaults to `true`.
+     */
+    rejectUnauthorized?: boolean;
+    /**
+     * An array of strings or `Buffer`s containing supported NPN protocols. `Buffer`s should have the format `[len][name][len][name]...` e.g. `0x05hello0x05world`, where the first byte is the length of the next protocol name. Passing an array is usually much simpler, e.g. `['hello', 'world']`.
+     */
+    NPNProtocols?: string[] | Buffer[];
+    /**
+     * Server name for the SNI (Server Name Indication) TLS extension.
+     */
+    servername?: string;
+    /**
+     * The SSL method to use, e.g., `SSLv3_method` to force SSL version 3. The possible values depend on the version of OpenSSL installed in the environment and are defined in the constant SSL_METHODS.
+     */
+    secureProtocol?: string;
   }
 
-  export function createServer(options: TlsOptions, secureConnectionListener?: (cleartextStream: ClearTextStream) => void): Server;
-  export function connect(options: TlsOptions, secureConnectionListener?: () => void): ClearTextStream;
-  export function connect(port: number, host?: string, options?: ConnectionOptions, secureConnectListener?: () => void): ClearTextStream;
-  export function connect(port: number, options?: ConnectionOptions, secureConnectListener?: () => void): ClearTextStream;
-  export function createSecurePair(credentials?: crypto.Credentials, isServer?: boolean, requestCert?: boolean, rejectUnauthorized?: boolean): SecurePair;
+  export interface CreateServerOptions {
+    /**
+     * A `string` or `Buffer` containing the private key, certificate and CA certs of the server in PFX or PKCS12 format. (Mutually exclusive with the `key`, `cert`, and `ca` options.)
+     */
+    pfx?: string | Buffer;
+    /**
+     * A string or `Buffer` containing the private key of the server in PEM format. (Required)
+     */
+    key?: string | Buffer;
+    /**
+     * A string of passphrase for the private key or pfx.
+     */
+    passphrase?: string;
+    /**
+     * A string or `Buffer` containing the certificate key of the server in PEM format. (Required).
+     */
+    cert?: string | Buffer;
+    /**
+     * An array of strings or `Buffer`s of trusted certificates in PEM format. If this is omitted several well known "root" CAs will be used, like VeriSign. These are used to authorize connections.
+     */
+    ca?: string | Buffer;
+    /**
+     * Either a string or array of strings of PEM encoded CRLs (Certificate Revocation List).
+     */
+    crl?: string | string[];
+    /**
+     * A string describing the ciphers to use or exclude, separated by `:`.
+     */
+    ciphers?: string;
+    /**
+     * Abort the connection if the SSL/TLS handshake does not finish in the specified number of milliseconds. Defaults to `120` seconds. A `'clientError'` is emitted on the `tls.Server` object whenever a handshake times out.
+     */
+    handshakeTimeout?: number;
+    /**
+     * When choosing a cipher, use the server's preferences instead of the client preferences. Defaults to `true`.
+     */
+    honorCipherOrder?: boolean;
+    /**
+     * If `true` the server will request a certificate from clients that connect and attempt to verify that certificate. Defaults to `false`.
+     */
+    requestCert?: boolean;
+    /**
+     * If `true` the server will reject any connection which is not authorized with the list of supplied CAs. This option only has an effect if `requestCert` is `true`. Defaults to `false`.
+     */
+    rejectUnauthorized?: boolean;
+    /**
+     * An array of strings or a `Buffer` naming possible NPN protocols. (Protocols should be ordered by their priority.)
+     */
+    NPNProtocols?: string[] | Buffer;
+    /**
+     *  function that will be called if client supports SNI TLS extension. Only one argument will be passed to it: servername. And SNICallback should return SecureContext instance. (You can use `crypto.createCredentials(...).context` to get proper SecureContext). If `SNICallback` wasn't provided - default callback with high-level API will be used (see below).
+     */
+    SNICallback?: (servername: string) => any;
+    /**
+     * A string containing an opaque identifier for session resumption. If `requestCert` is true, the default is a 128 bit truncated SHA1 hash value generated from the command-line. Otherwise, a default is not provided.
+     */
+    sessionIdContext?: string;
+    /**
+     * The SSL method to use, e.g., `SSLv3_method` to force SSL version 3. The possible values depend on the version of OpenSSL installed in the environment and are defined in the constant SSL_METHODS.
+     */
+    secureProtocol?: string;
+    /**
+     * Set server options. For example, to disable the SSLv3 protocol set the `SSL_OP_NO_SSLv3` flag. See SSL_CTX_set_options for all available options.
+     */
+    secureOptions?: string;
+  }
+
+  /**
+   * Creates a new tls.Server. The secureConnectionListener, if provided, is automatically set as a listener for the `'secureConnection'` event.
+   */
+  export function createServer(options: CreateServerOptions, secureConnectionListener?: (cleartextStream: CleartextStream) => void): Server;
+
+  /**
+   * Creates a new client connection to the given `port` and `host` or `options.port` and `options.host`. (If `host` is omitted, it defaults to `localhost`.)
+   */
+  export function connect(options: ConnectOptions, callback?: () => void): CleartextStream;
+  export function connect(port: number, options?: ConnectOptions, callback?: () => void): CleartextStream;
+  export function connect(port: number, host?: string, options?: ConnectOptions, callback?: () => void): CleartextStream;
+
+  /**
+   * Returns an array with the names of the supported SSL ciphers.
+   */
+  export function getCiphers(): string[];
 }
 
 declare module "crypto" {

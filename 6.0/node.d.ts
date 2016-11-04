@@ -317,6 +317,14 @@ declare class Buffer extends Uint8Array {
    */
   static from(buffer: Buffer): Buffer;
   /**
+   * Creates a new Buffer containing the given JavaScript string {str}.
+   * If provided, the {encoding} parameter identifies the character encoding.
+   * If not provided, {encoding} defaults to 'utf8'.
+   *
+   * @param str
+   */
+  static from(str: string, encoding?: string): Buffer;
+  /**
    * Allocates a new `Buffer` of `size` bytes. If `fill` is `undefined`, the `Buffer` will be _zero-filled_.
    *
    * @param size The desired length of the new `Buffer`
@@ -332,14 +340,6 @@ declare class Buffer extends Uint8Array {
    * @param size The desired length of the new `Buffer`
    */
   static allocUnsafe(size: number): Buffer;
-  /**
-   * Creates a new Buffer containing the given JavaScript string {str}.
-   * If provided, the {encoding} parameter identifies the character encoding.
-   * If not provided, {encoding} defaults to 'utf8'.
-   *
-   * @param str
-   */
-  static from(str: string, encoding?: string): Buffer;
   /**
    * Returns `true` if `obj` is a Buffer, `false` otherwise.
    */
@@ -1081,7 +1081,7 @@ declare module "https" {
     key?: string | Buffer;
     passphrase?: string;
     cert?: string | Buffer;
-    ca?: string | Buffer | Array<string | Buffer>;
+    ca?: string | Buffer | string[] | Buffer[];
     ciphers?: string;
     rejectUnauthorized?: boolean;
     secureProtocol?: string;
@@ -1436,7 +1436,9 @@ declare module "dns" {
 declare module "net" {
   import * as stream from "stream";
 
-  export interface Socket extends stream.Duplex {
+  export class Socket extends stream.Duplex {
+    constructor(options?: { fd?: string; type?: string; allowHalfOpen?: boolean; });
+
     // Extended base methods
     write(buffer: Buffer): boolean;
     write(buffer: Buffer, cb?: Function): boolean;
@@ -1475,10 +1477,6 @@ declare module "net" {
     end(data?: any, encoding?: string): void;
   }
 
-  export var Socket: {
-    new (options?: { fd?: string; type?: string; allowHalfOpen?: boolean; }): Socket;
-  };
-
   export interface ListenOptions {
     port?: number;
     host?: string;
@@ -1487,24 +1485,25 @@ declare module "net" {
     exclusive?: boolean;
   }
 
-  export interface Server extends Socket {
-    listen(port: number, hostname?: string, backlog?: number, listeningListener?: Function): Server;
-    listen(port: number, hostname?: string, listeningListener?: Function): Server;
-    listen(port: number, backlog?: number, listeningListener?: Function): Server;
-    listen(port: number, listeningListener?: Function): Server;
-    listen(path: string, backlog?: number, listeningListener?: Function): Server;
-    listen(path: string, listeningListener?: Function): Server;
-    listen(handle: any, backlog?: number, listeningListener?: Function): Server;
-    listen(handle: any, listeningListener?: Function): Server;
-    listen(options: ListenOptions, listeningListener?: Function): Server;
-    close(callback?: Function): Server;
+  export class Server extends Socket {
+    listen(port: number, hostname?: string, backlog?: number, listeningListener?: Function): this;
+    listen(port: number, hostname?: string, listeningListener?: Function): this;
+    listen(port: number, backlog?: number, listeningListener?: Function): this;
+    listen(port: number, listeningListener?: Function): this;
+    listen(path: string, backlog?: number, listeningListener?: Function): this;
+    listen(path: string, listeningListener?: Function): this;
+    listen(handle: any, backlog?: number, listeningListener?: Function): this;
+    listen(handle: any, listeningListener?: Function): this;
+    listen(options: ListenOptions, listeningListener?: Function): this;
+    close(callback?: () => void): this;
     address(): { port: number; family: string; address: string; };
     getConnections(cb: (error: Error, count: number) => void): void;
-    ref(): Server;
-    unref(): Server;
+    ref(): this;
+    unref(): this;
     maxConnections: number;
     connections: number;
   }
+
   export function createServer(connectionListener?: (socket: Socket) => void): Server;
   export function createServer(options?: { allowHalfOpen?: boolean; }, connectionListener?: (socket: Socket) => void): Server;
   export function connect(options: { port: number, host?: string, localAddress?: string, localPort?: string, family?: number, allowHalfOpen?: boolean; }, connectionListener?: Function): Socket;
@@ -2391,94 +2390,448 @@ declare module "tls" {
   import * as net from "net";
   import * as stream from "stream";
 
-  var CLIENT_RENEG_LIMIT: number;
-  var CLIENT_RENEG_WINDOW: number;
+  export var CLIENT_RENEG_LIMIT: number;
+  export var CLIENT_RENEG_WINDOW: number;
+  export var SLAB_BUFFER_SIZE: number;
+  export var DEFAULT_CIPHERS: string;
+  export var DEFAULT_ECDH_CURVE: string;
 
-  export interface TlsOptions {
-    host?: string;
-    port?: number | string;
-    pfx?: string | Buffer;
-    key?: string | Buffer;
-    passphrase?: string;
-    cert?: string | Buffer;
-    ca?: string | Buffer | Array<string | Buffer>;
-    crl?: string | string[];
-    ciphers?: string;
-    honorCipherOrder?: any;
-    requestCert?: boolean;
-    rejectUnauthorized?: boolean;
-    NPNProtocols?: Array<string | Buffer>;
-    SNICallback?: (servername: string) => any;
-  }
-
-  export interface ConnectionOptions {
-    host?: string;
-    port?: number | string;
-    socket?: net.Socket;
-    pfx?: string | Buffer;
-    key?: string | Buffer;
-    passphrase?: string;
-    cert?: string | Buffer;
-    ca?: string | Buffer | Array<string | Buffer>;
-    rejectUnauthorized?: boolean;
-    NPNProtocols?: Array<string | Buffer>;
-    servername?: string;
-  }
-
-  export interface Server extends net.Server {
-    close(): Server;
-    address(): { port: number; family: string; address: string; };
-    addContext(hostName: string, credentials: {
-      key: string;
-      cert: string;
-      ca: string;
-    }): void;
-    maxConnections: number;
+  export class Server extends net.Server {
+    /**
+     * The `server.addContext()` method adds a secure context that will be used if the client request's SNS hostname matches the supplied `hostname` (or wildcard).
+     *
+     * @param hostname A SNI hostname or wildcard (e.g. `'*'`)
+     * @param options An object containing any of the possible properties from the `tls.createSecureContext()` options arguments
+     */
+    addContext(hostName: string, options: SecureContextOptions): void;
+    /**
+     * Returns a `Buffer` instance holding the keys currently used for encryption/decryption of the TLS Session Tickets.
+     */
+    getTicketKeys(): Buffer;
+    /**
+     * Updates the keys for encryption/decryption of the TLS Session Tickets.
+     *
+     * Note: The key's Buffer should be 48 bytes long. See ticketKeys option in tls.createServer for more information on how it is used.
+     *
+     * Note: Changes to the ticket keys are effective only for future server connections. Existing or currently pending server connections will use the previous keys.
+     */
+    setTicketKeys(keys: Buffer): void;
+    /**
+     * Returns the current number of concurrent connections on the server.
+     */
     connections: number;
   }
 
-  export interface ClearTextStream extends stream.Duplex {
-    authorized: boolean;
-    authorizationError: Error;
-    getPeerCertificate(): any;
-    getCipher: {
-      name: string;
-      version: string;
-    };
-    address: {
-      port: number;
-      family: string;
-      address: string;
-    };
-    remoteAddress: string;
-    remotePort: number;
+  export interface Certificate {
+    /**
+     * Country code.
+     */
+    C: string;
+    /**
+     * Street.
+     */
+    ST: string;
+    /**
+     * Locality.
+     */
+    L: string;
+    /**
+     * Organization.
+     */
+    O: string;
+    /**
+     * Organizational unit.
+     */
+    OU: string;
+    /**
+     * Common name.
+     */
+    CN: string;
   }
 
-  export interface SecurePair {
-    encrypted: any;
-    cleartext: any;
+  export interface Cipher {
+    /**
+     * The cipher name.
+     */
+    name: string;
+    /**
+     * SSL/TLS protocol version.
+     */
+    version: string;
+  }
+
+  export interface EphemeralKeyInfo {
+    type: 'DH' | 'ECDH';
+    name?: string;
+    size: number;
+  }
+
+  export interface PeerCertificate {
+    subject: Certificate;
+    issuerInfo: Certificate;
+    issuer: Certificate;
+    raw: Buffer;
+    valid_from: string;
+    valid_to: string;
+    fingerprint: string;
+    serialNumber: string;
+  }
+
+  export interface TLSSocketOptions {
+    /**
+     * An optional TLS context object from `tls.createSecureContext()`.
+     */
+    secureContext?: SecureContext;
+    /**
+     * If true the TLS socket will be instantiated in server-mode. Defaults to `false`.
+     */
+    isServer?: boolean;
+    /**
+     * An optional net.Server instance.
+     */
+    server?: net.Server;
+    /**
+     * Optional, see `tls.createServer()`.
+     */
+    requestCert?: boolean;
+    /**
+     * Optional, see `tls.createServer()`.
+     */
+    rejectUnauthorized?: boolean;
+    /**
+     * Optional, see `tls.createServer()`.
+     */
+    NPNProtocols?: string[] | Buffer;
+    /**
+     * Optional, see `tls.createServer()`.
+     */
+    ALPNProtocols?: string[] | Buffer;
+    /**
+     * Optional, see `tls.createServer()`.
+     */
+    SNICallback?: (servername: string, cb: (err: Error | null, ctx: SecureContext) => void) => void;
+    /**
+     * An optional Buffer instance containing a TLS session.
+     */
+    session?: Buffer;
+    /**
+     * If `true`, specifies that the OCSP status request extension will be added to the client hello and an 'OCSPResponse' event will be emitted on the socket before establishing a secure communication
+     */
+    requestOCSP?: boolean;
+  }
+
+  export interface RenegotiateOptions {
+    rejectUnauthorized?: boolean;
+    requestCert?: boolean;
+  }
+
+  export class TLSSocket extends net.Socket {
+    /**
+     * Construct a new `tls.TLSSocket` object from an existing TCP socket.
+     */
+    constructor(socket: net.Socket, options?: TLSSocketOptions);
+    /**
+     * Returns `true` if the peer certificate was signed by one of the CAs specified when creating the `tls.TLSSocket` instance, otherwise `false`.
+     */
+    authorized: boolean;
+    /**
+     * Returns the reason why the peer's certificate was not been verified. This property is set only when `tlsSocket.authorized === false`.
+     */
+    authorizationError?: Error;
+    /**
+     * Always returns `true`. This may be used to distinguish TLS sockets from regular `net.Socket` instances.
+     */
+    encrypted: true;
+    /**
+     * Returns an object representing the cipher name and the SSL/TLS protocol version that first defined the cipher.
+     */
+    getCipher(): Cipher;
+    /**
+     * Returns an object representing the type, name, and size of parameter of an ephemeral key exchange in Perfect Forward Secrecy on a client connection. It returns an empty object when the key exchange is not ephemeral. As this is only supported on a client socket; `null` is returned if called on a server socket. The supported types are `'DH'` and `'ECDH'`. The `name` property is available only when type is `'ECDH'`.
+     */
+    getEphemeralKeyInfo(): EphemeralKeyInfo;
+    /**
+     * Returns an object representing the peer's certificate. The returned object has some properties corresponding to the fields of the certificate.
+     *
+     * @param detailed Specify `true` to request that the full certificate chain with the `issuer` property be returned; false to return only the top certificate without the `issuer` property.
+     */
+    getPeerCertificate(detailed?: boolean): PeerCertificate;
+    /**
+     * Returns a string containing the negotiated SSL/TLS protocol version of the current connection. The value `'unknown'` will be returned for connected sockets that have not completed the handshaking process. The value `null` will be returned for server sockets or disconnected client sockets.
+     */
+    getProtocol(): string | null;
+    /**
+     * Returns the ASN.1 encoded TLS session or `undefined` if no session was negotiated. Can be used to speed up handshake establishment when reconnecting to the server.
+     */
+    getSession(): Buffer | undefined;
+    /**
+     * Returns the TLS session ticket or `undefined` if no session was negotiated.
+     *
+     * Note: This only works with client TLS sockets. Useful only for debugging, for session reuse `provide` session option to `tls.connect()`.
+     */
+    getTLSTicket(): Buffer | undefined;
+    /**
+     * Returns the string representation of the local IP address.
+     */
+    localAddress: string;
+    /**
+     * Returns the numeric representation of the local port.
+     */
+    localPort: number;
+    /**
+     * Returns the string representation of the remote IP address. For example, `'74.125.127.100'` or `'2001:4860:a005::68'`.
+     */
+    remoteAddress: string;
+    /**
+     * Returns the string representation of the remote IP family. `'IPv4'` or `'IPv6'`.
+     */
+    remoteFamily: string;
+    /**
+     * The numeric representation of the remote port. For example, 443.
+     */
+    remotePort: number;
+    /**
+     * The `tlsSocket.renegotiate()` method initiates a TLS renegotiation process.
+     *
+     * Note: This method can be used to request a peer's certificate after the secure connection has been established.
+     *
+     * Note: When running as the server, the socket will be destroyed with an error after `handshakeTimeout` timeout.
+     */
+    renegotiate(options: RenegotiateOptions, callback: (err: Error | null) => any): any;
+    /**
+     * The `tlsSocket.setMaxSendFragment()` method sets the maximum TLS fragment size. Returns `true` if setting the limit succeeded; false otherwise.
+     *
+     * Smaller fragment sizes decrease the buffering latency on the client: larger fragments are buffered by the TLS layer until the entire fragment is received and its integrity is verified; large fragments can span multiple roundtrips and their processing can be delayed due to packet loss or reordering. However, smaller fragments add extra TLS framing bytes and CPU overhead, which may decrease overall server throughput.
+     *
+     * @param size The maximum TLS fragment size. Defaults to `16384`. The maximum value is `16384`.
+     */
+    setMaxSendFragment(size: number): boolean;
+  }
+
+  export interface ConnectOptions {
+    /**
+     * Host the client should connect to.
+     */
+    host?: string;
+    /**
+     * Port the client should connect to.
+     */
+    port?: number | string;
+    /**
+     * Establish secure connection on a given socket rather than creating a new socket. If this option is specified, `host` and `port` are ignored.
+     */
+    socket?: net.Socket;
+    /**
+     * Creates unix socket connection to path. If this option is specified, `host` and `port` are ignored.
+     */
+    path?: string;
+    /**
+     * A `string` or `Buffer` containing the private key, certificate, and CA certs of the client in PFX or PKCS12 format.
+     */
+    pfx?: string | Buffer;
+    /**
+     *  A string, `Buffer`, array of strings, or array of `Buffer`s containing the private key of the client in PEM format.
+     */
+    key?: string | Buffer | string[] | Buffer[];
+    /**
+     * A string containing the passphrase for the private key or pfx.
+     */
+    passphrase?: string;
+    /**
+     * A string, `Buffer`, array of strings, or array of `Buffer`s containing the certificate key of the client in PEM format.
+     */
+    cert?: string | Buffer | string[] | Buffer[];
+    /**
+     * A string, `Buffer`, array of strings, or array of `Buffer`s of trusted certificates in PEM format. If this is omitted several well known "root" CAs (like VeriSign) will be used. These are used to authorize connections.
+     */
+    ca?: string | Buffer | string[] | Buffer[];
+    /**
+     *  A string describing the ciphers to use or exclude, separated by `:`. Uses the same default cipher suite as `tls.createServer()`.
+     */
+    ciphers?: string;
+    /**
+     * If true, the server certificate is verified against the list of supplied CAs. An `'error'` event is emitted if verification fails; `err.code` contains the OpenSSL error code. Defaults to `true`.
+     */
+    rejectUnauthorized?: boolean;
+    /**
+     * An array of strings or `Buffer`s containing supported NPN protocols. `Buffer`s should have the format `[len][name][len][name]...` e.g. `0x05hello0x05world`, where the first byte is the length of the next protocol name. Passing an array is usually much simpler, e.g. `['hello', 'world']`.
+     */
+    NPNProtocols?: string[] | Buffer[];
+    /**
+     * An array of strings or `Buffer`s containing the supported ALPN protocols. `Buffer`s should have the format `[len][name][len][name]...` e.g. `0x05hello0x05world`, where the first byte is the length of the next protocol name. Passing an array is usually much simpler: `['hello', 'world']`.)
+     */
+    ALPNProtocols?: string[] | Buffer[];
+    /**
+     * Server name for the SNI (Server Name Indication) TLS extension.
+     */
+    servername?: string;
+    /**
+     * A callback function to be used when checking the server's hostname against the certificate. This should throw an error if verification fails. The method should return `undefined` if the `servername` and `cert` are verified.
+     */
+    checkServerIdentity?: (servername: string, cert: Buffer) => void;
+    /**
+     * The SSL method to use, e.g., `SSLv3_method` to force SSL version 3. The possible values depend on the version of OpenSSL installed in the environment and are defined in the constant SSL_METHODS.
+     */
+    secureProtocol?: string;
+    /**
+     * An optional TLS context object as returned by from `tls.createSecureContext( ... )`. It can be used for caching client certificates, keys, and CA certificates.
+     */
+    secureContext?: SecureContext;
+    /**
+     * A `Buffer` instance, containing TLS session.
+     */
+    session?: Buffer;
+    /**
+     * Minimum size of the DH parameter in bits to accept a TLS connection. When a server offers a DH parameter with a size less than `minDHSize`, the TLS connection is destroyed and an error is thrown. Defaults to `1024`.
+     */
+    minDHSize?: number;
   }
 
   export interface SecureContextOptions {
+    /**
+     * A string or `Buffer` holding the PFX or PKCS12 encoded private key, certificate, and CA certificates.
+     */
     pfx?: string | Buffer;
-    key?: string | string[] | Buffer | Array<{ pem: string, passphrase: string }>;
+    /**
+     * The private key of the server in PEM format. To support multiple keys using different algorithms, an array can be provided either as an array of key strings or as an array of objects in the format `{pem: key, passphrase: passphrase}`. This option is required for ciphers that make use of private keys.
+     */
+    key?: string | string[] | Buffer | Array<{ pem: string | string[] | Buffer, passphrase: string }>;
+    /**
+     * A string containing the passphrase for the private key or pfx.
+     */
     passphrase?: string;
-    cert?: string | Buffer;
-    ca?: string | Buffer;
+    /**
+     * A string containing the PEM encoded certificate.
+     */
+    cert?: string | Buffer | string[] | Buffer[];
+    /**
+     * A string, `Buffer`, array of strings, or array of `Buffer`s of trusted certificates in PEM format. If omitted, several well known "root" CAs (like VeriSign) will be used. These are used to authorize connections.
+     */
+    ca?: string | Buffer | string[] | Buffer[];
+    /**
+     * Either a string or array of strings of PEM encoded CRLs (Certificate Revocation List).
+     */
     crl?: string | string[];
+    /**
+     * A string describing the ciphers to use or exclude. Consult https://www.openssl.org/docs/apps/ciphers.html#CIPHER-LIST-FORMAT for details on the format.
+     */
     ciphers?: string;
+    /**
+     * If `true`, when a cipher is being selected, the server's preferences will be used instead of the client preferences.
+     */
     honorCipherOrder?: boolean;
+  }
+
+  export interface CreateServerOptions {
+    /**
+     * A `string` or `Buffer` containing the private key, certificate and CA certs of the server in PFX or PKCS12 format. (Mutually exclusive with the `key`, `cert`, and `ca` options.)
+     */
+    pfx?: string | Buffer;
+    /**
+     * The private key of the server in PEM format. To support multiple keys using different algorithms an array can be provided either as a plain array of key strings or an array of objects in the format `{pem: key, passphrase: passphrase}`. This option is required for ciphers that make use of private keys.
+     */
+    key?: string | string[] | Buffer | Array<{ pem: string | string[] | Buffer, passphrase: string }>;
+    /**
+     * A string containing the passphrase for the private key or pfx.
+     */
+    passphrase?: string;
+    /**
+     * A string containing the PEM encoded certificate.
+     */
+    cert?: string | Buffer | string[] | Buffer[];
+    /**
+     * A string, `Buffer`, array of strings, or array of `Buffer`s of trusted certificates in PEM format. If omitted, several well known "root" CAs (like VeriSign) will be used. These are used to authorize connections.
+     */
+    ca?: string | Buffer | string[] | Buffer[];
+    /**
+     * Either a string or array of strings of PEM encoded CRLs (Certificate Revocation List).
+     */
+    crl?: string | string[];
+    /**
+     * A string describing the ciphers to use or exclude, separated by `:`.
+     */
+    ciphers?: string;
+    /**
+     * A string describing a named curve to use for ECDH key agreement or false to disable ECDH. Defaults to `prime256v1` (NIST P-256). Use crypto.getCurves() to obtain a list of available curve names. On recent releases, `openssl ecparam -list_curves` will also display the name and description of each available elliptic curve.
+     */
+    ecdhCurve?: string;
+    /**
+     * A string or `Buffer` containing Diffie Hellman parameters, required for Perfect Forward Secrecy. Use `openssl dhparam` to create the parameters. The key length must be greater than or equal to 1024 bits, otherwise an error will be thrown. It is strongly recommended to use 2048 bits or larger for stronger security. If omitted or invalid, the parameters are silently discarded and DHE ciphers will not be available.
+     */
+    dhparam?: string | Buffer;
+    /**
+     * Abort the connection if the SSL/TLS handshake does not finish in the specified number of milliseconds. Defaults to `120` seconds. A `'clientError'` is emitted on the `tls.Server` object whenever a handshake times out.
+     */
+    handshakeTimeout?: number;
+    /**
+     * When choosing a cipher, use the server's preferences instead of the client preferences. Defaults to `true`.
+     */
+    honorCipherOrder?: boolean;
+    /**
+     * If `true` the server will request a certificate from clients that connect and attempt to verify that certificate. Defaults to `false`.
+     */
+    requestCert?: boolean;
+    /**
+     * If `true` the server will reject any connection which is not authorized with the list of supplied CAs. This option only has an effect if `requestCert` is `true`. Defaults to `false`.
+     */
+    rejectUnauthorized?: boolean;
+    /**
+     * An array of strings or a `Buffer` naming possible NPN protocols. (Protocols should be ordered by their priority.)
+     */
+    NPNProtocols?: string[] | Buffer;
+    /**
+     * An array of strings or a `Buffer` naming possible ALPN protocols. (Protocols should be ordered by their priority.) When the server receives both NPN and ALPN extensions from the client, ALPN takes precedence over NPN and the server does not send an NPN extension to the client.
+     */
+    ALPNProtocols?: string[] | Buffer;
+    /**
+     * A function that will be called if the client supports SNI TLS extension. Two arguments will be passed when called: `servername` and `cb`. `SNICallback` should invoke `cb(null, ctx)`, where `ctx` is a SecureContext instance. (`tls.createSecureContext(...)` can be used to get a proper SecureContext.) If `SNICallback` wasn't provided the default callback with high-level API will be used (see below).
+     */
+    SNICallback?: (servername: string, cb: (err: Error | null, ctx: SecureContext) => void) => void;
+    /**
+     * An integer specifying the number of seconds after which the TLS session identifiers and TLS session tickets created by the server will time out. See SSL_CTX_set_timeout for more details.
+     */
+    sessionTimeout?: number;
+    /**
+     * A 48-byte `Buffer` instance consisting of a 16-byte prefix, a 16-byte HMAC key, and a 16-byte AES key. This can be used to accept TLS session tickets on multiple instances of the TLS server. Note that this is automatically shared between `cluster` module workers.
+     */
+    ticketKeys?: Buffer;
+    /**
+     * A string containing an opaque identifier for session resumption. If `requestCert` is true, the default is a 128 bit truncated SHA1 hash value generated from the command-line. Otherwise, a default is not provided.
+     */
+    sessionIdContext?: string;
+    /**
+     * The SSL method to use, e.g., `SSLv3_method` to force SSL version 3. The possible values depend on the version of OpenSSL installed in the environment and are defined in the constant SSL_METHODS.
+     */
+    secureProtocol?: string;
   }
 
   export interface SecureContext {
     context: any;
   }
 
-  export function createServer(options: TlsOptions, secureConnectionListener?: (cleartextStream: ClearTextStream) => void): Server;
-  export function connect(options: TlsOptions, secureConnectionListener?: () => void): ClearTextStream;
-  export function connect(port: number, host?: string, options?: ConnectionOptions, secureConnectListener?: () => void): ClearTextStream;
-  export function connect(port: number, options?: ConnectionOptions, secureConnectListener?: () => void): ClearTextStream;
-  export function createSecureContext(details: SecureContextOptions): SecureContext;
+  /**
+   * Creates a new tls.Server. The secureConnectionListener, if provided, is automatically set as a listener for the `'secureConnection'` event.
+   */
+  export function createServer(options: CreateServerOptions, secureConnectionListener?: (socket: TLSSocket) => void): Server;
+
+  /**
+   * Creates a new client connection to the given `port` and `host` or `options.port` and `options.host`. (If `host` is omitted, it defaults to `localhost`.)
+   */
+  export function connect(options: ConnectOptions, callback?: () => void): TLSSocket;
+  export function connect(port: number, options?: ConnectOptions, callback?: () => void): TLSSocket;
+  export function connect(port: number, host?: string, options?: ConnectOptions, callback?: () => void): TLSSocket;
+
+  /**
+   * The `tls.createSecureContext()` method creates a credentials object.
+   *
+   * If the `'ca'` option is not given, then Node.js will use the default publicly trusted list of CAs as given in http://mxr.mozilla.org/mozilla/source/security/nss/lib/ckfw/builtins/certdata.txt.
+   */
+  export function createSecureContext(options: SecureContextOptions): SecureContext;
+
+  /**
+   * Returns an array with the names of the supported SSL ciphers.
+   */
+  export function getCiphers(): string[];
 }
 
 declare module "crypto" {

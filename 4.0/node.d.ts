@@ -722,13 +722,13 @@ declare module "http" {
     agent?: Agent | boolean;
   }
 
-  export interface Server extends events.EventEmitter, net.Server {
+  export class Server extends net.Server {
     setTimeout(msecs: number, callback: Function): void;
     maxHeadersCount: number;
     timeout: number;
   }
 
-  export interface ServerResponse extends events.EventEmitter, stream.Writable {
+  export class ServerResponse extends stream.Writable {
     // Extended base methods
     write(buffer: Buffer): boolean;
     write(buffer: Buffer, cb?: Function): boolean;
@@ -743,6 +743,7 @@ declare module "http" {
     statusMessage: string;
     headersSent: boolean;
     setHeader(name: string, value: string | string[]): void;
+    setTimeout(msecs: number, callback: () => void): this;
     sendDate: boolean;
     getHeader(name: string): string;
     removeHeader(name: string): void;
@@ -756,7 +757,7 @@ declare module "http" {
     end(str: string, encoding?: string, cb?: Function): void;
   }
 
-  export interface ClientRequest extends events.EventEmitter, stream.Writable {
+  export class ClientRequest extends stream.Writable {
     // Extended base methods
     write(buffer: Buffer): boolean;
     write(buffer: Buffer, cb?: Function): boolean;
@@ -783,7 +784,7 @@ declare module "http" {
     end(data?: any, encoding?: string): void;
   }
 
-  export interface IncomingMessage extends events.EventEmitter, stream.Readable {
+  export class IncomingMessage extends stream.Readable {
     httpVersion: string;
     httpVersionMajor: number;
     httpVersionMinor: number;
@@ -853,6 +854,7 @@ declare module "http" {
     [errorCode: number]: string;
     [errorCode: string]: string;
   };
+
   export function createServer(requestListener?: (request: IncomingMessage, response: ServerResponse) => void): Server;
   export function createClient(port?: number, host?: string): any;
   export function request(options: string | RequestOptions, callback?: (res: IncomingMessage) => void): ClientRequest;

@@ -446,12 +446,15 @@ declare namespace NodeJS {
     addListener(event: string, listener: Function): this;
     on(event: string, listener: Function): this;
     once(event: string, listener: Function): this;
+    prependListener(event: string, listener: Function): this;
+    prependOnceListener(event: string, listener: Function): this;
     removeListener(event: string, listener: Function): this;
     removeAllListeners(event?: string): this;
     setMaxListeners(n: number): this;
     getMaxListeners(): number;
     listeners(event: string): Function[];
     emit(event: string, ...args: any[]): boolean;
+    eventNames(): string[];
     listenerCount(type: string): number;
   }
 
@@ -540,6 +543,7 @@ declare namespace NodeJS {
       ares: string;
       uv: string;
       zlib: string;
+      modules: string;
       openssl: string;
     };
     config: {
@@ -701,13 +705,16 @@ declare module "events" {
     addListener(event: string, listener: (...args: any[]) => void): this;
     on(event: string, listener: (...args: any[]) => void): this;
     once(event: string, listener: (...args: any[]) => void): this;
+    prependListener(event: string, listener: (...args: any[]) => void): this;
+    prependOnceListener(event: string, listener: (...args: any[]) => void): this;
     removeListener(event: string, listener: (...args: any[]) => void): this;
     removeAllListeners(event?: string): this;
     setMaxListeners(n: number): this;
     getMaxListeners(): number;
-    emit(event: string, ...args: any[]): boolean;
     listeners(event: string): Array<(...args: any[]) => void>;
     listenerCount(event: string): number;
+    emit(event: string, ...args: any[]): boolean;
+    eventNames(): string[];
   }
 
   export interface Listener<E extends string, L extends Function> {
@@ -1041,7 +1048,7 @@ declare module "os" {
 
   export function tmpdir(): string;
   export function homedir(): string;
-  export function endianness(): string;
+  export function endianness(): "BE" | "LE";
   export function hostname(): string;
   export function type(): string;
   export function platform(): string;
@@ -1608,6 +1615,7 @@ declare module "fs" {
     bytesRead: number;
     path: string | Buffer;
     close(): void;
+    destroy(): void;
   }
 
   export class WriteStream extends stream.Writable implements
@@ -2376,13 +2384,28 @@ declare module "path" {
 }
 
 declare module "string_decoder" {
-  export interface NodeStringDecoder {
+  import * as buffer from "buffer";
+
+  export class StringDecoder {
+    /**
+     * @param encoding The character encoding the `StringDecoder` will use. Defaults to `'utf8'`.
+     */
+    constructor(encoding?: buffer.Encoding);
+    /**
+     * Returns a decoded string, ensuring that any incomplete multibyte characters at the end of the `Buffer` are omitted from the returned string and stored in an internal buffer for the next call to `stringDecoder.write()` or `stringDecoder.end()`.
+     *
+     * @param buffer A `Buffer` containing the bytes to decode.
+     */
     write(buffer: Buffer): string;
-    detectIncompleteChar(buffer: Buffer): number;
+    /**
+     * Returns any remaining input stored in the internal buffer as a string. Bytes representing incomplete UTF-8 and UTF-16 characters will be replaced with substitution characters appropriate for the character encoding.
+     *
+     * If the `buffer` argument is provided, one final call to `stringDecoder.write()` is performed before returning the remaining input.
+     *
+     * @param buffer A `Buffer` containing the bytes to decode.
+     */
+    end(buffer?: Buffer): string;
   }
-  export var StringDecoder: {
-    new (encoding: string): NodeStringDecoder;
-  };
 }
 
 declare module "tls" {
@@ -3375,9 +3398,32 @@ declare module "constants" {
   export var S_IFREG: number;
   export var S_IFDIR: number;
   export var S_IFCHR: number;
+  export var S_IFBLK: number;
+  export var S_IFIFO: number;
+  export var S_IFSOCK: number;
+  export var S_IRWXU: number;
+  export var S_IRUSR: number;
+  export var S_IWUSR: number;
+  export var S_IXUSR: number;
+  export var S_IRWXG: number;
+  export var S_IRGRP: number;
+  export var S_IWGRP: number;
+  export var S_IXGRP: number;
+  export var S_IRWXO: number;
+  export var S_IROTH: number;
+  export var S_IWOTH: number;
+  export var S_IXOTH: number;
   export var S_IFLNK: number;
   export var O_CREAT: number;
   export var O_EXCL: number;
+  export var O_NOCTTY: number;
+  export var O_DIRECTORY: number;
+  export var O_NOATIME: number;
+  export var O_NOFOLLOW: number;
+  export var O_SYNC: number;
+  export var O_SYMLINK: number;
+  export var O_DIRECT: number;
+  export var O_NONBLOCK: number;
   export var O_TRUNC: number;
   export var O_APPEND: number;
   export var F_OK: number;

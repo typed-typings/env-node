@@ -38,6 +38,7 @@ interface NodeError {
    */
   message: string;
 }
+
 interface Error extends NodeError { }
 
 interface ErrorConstructor {
@@ -513,6 +514,7 @@ declare namespace NodeJS {
       ares: string;
       uv: string;
       zlib: string;
+      modules: string;
       openssl: string;
     };
     config: {
@@ -1570,6 +1572,7 @@ declare module "fs" {
     bytesRead: number;
     path: string;
     close(): void;
+    destroy(): void;
   }
 
   export class WriteStream extends stream.Writable implements
@@ -2272,13 +2275,22 @@ declare module "path" {
 }
 
 declare module "string_decoder" {
-  export interface NodeStringDecoder {
+  import * as buffer from "buffer";
+
+  export class StringDecoder {
+    /**
+     * @param encoding The character encoding the `StringDecoder` will use. Defaults to `'utf8'`.
+     */
+    constructor(encoding?: buffer.Encoding);
+    /**
+     * Returns a decoded string.
+     */
     write(buffer: Buffer): string;
-    detectIncompleteChar(buffer: Buffer): number;
+    /**
+     * Returns any trailing bytes that were left in the buffer.
+     */
+    end(buffer?: Buffer): string;
   }
-  export var StringDecoder: {
-    new (encoding: string): NodeStringDecoder;
-  };
 }
 
 declare module "tls" {

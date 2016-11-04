@@ -1414,7 +1414,7 @@ declare module "url" {
   }
 
   export function parse(urlStr: string, parseQueryString?: boolean, slashesDenoteHost?: boolean): Url;
-  export function format(url: Url): string;
+  export function format(url: Url | string): string;
   export function resolve(from: string, to: string): string;
 }
 

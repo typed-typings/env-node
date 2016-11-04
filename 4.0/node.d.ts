@@ -2505,7 +2505,7 @@ declare module "crypto" {
   export function publicDecrypt(public_key: string | RsaKey, buffer: Buffer): Buffer;
   export function privateDecrypt(private_key: string | RsaKey, buffer: Buffer): Buffer;
 
-  export function setEngine (engine: string, flags?: number): void;
+  export function setEngine(engine: string, flags?: number): void;
 }
 
 declare module "stream" {

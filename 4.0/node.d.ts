@@ -84,8 +84,11 @@ interface ErrorConstructor {
 interface NodeCollection {
   size: number;
 }
-interface NodeWeakCollection {
-}
+
+interface NodeWeakCollection {}
+
+interface IterableIterator<T> {}
+
 interface NodeCollectionConstructor<T> {
   prototype: T;
 }
@@ -108,6 +111,7 @@ interface MapConstructor extends NodeCollectionConstructor<Map<any, any>> {
   new (): Map<any, any>;
   new <K, V>(): Map<K, V>;
 }
+
 declare var Map: MapConstructor;
 
 interface WeakMap<K, V> extends NodeWeakCollection {
@@ -122,6 +126,7 @@ interface WeakMapConstructor extends NodeCollectionConstructor<WeakMap<any, any>
   new (): WeakMap<any, any>;
   new <K, V>(): WeakMap<K, V>;
 }
+
 declare var WeakMap: WeakMapConstructor;
 
 interface Set<T> extends NodeCollection {
@@ -142,6 +147,7 @@ interface SetConstructor extends NodeCollectionConstructor<Set<any>> {
   new <T>(): Set<T>;
   new <T>(iterable: Array<T>): Set<T>;
 }
+
 declare var Set: SetConstructor;
 
 interface WeakSet<T> extends NodeWeakCollection {
@@ -157,6 +163,7 @@ interface WeakSetConstructor extends NodeCollectionConstructor<WeakSet<any>> {
   new <T>(): WeakSet<T>;
   new <T>(iterable: Array<T>): WeakSet<T>;
 }
+
 declare var WeakSet: WeakSetConstructor;
 
 /************************************************
@@ -174,7 +181,7 @@ declare function setTimeout(callback: (...args: any[]) => void, ms: number, ...a
 declare function clearTimeout(timeoutId: NodeJS.Timer): void;
 declare function setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]): NodeJS.Timer;
 declare function clearInterval(intervalId: NodeJS.Timer): void;
-declare function setImmediate(callback: (...args: any[]) => void, ...args: any[]): any;
+declare function setImmediate(callback: (...args: any[]) => void, ...args: any[]): NodeJS.Immediate;
 declare function clearImmediate(immediateId: any): void;
 
 interface NodeRequireFunction {
@@ -401,6 +408,9 @@ declare class Buffer extends Uint8Array {
   writeDoubleBE(value: number, offset: number, noAssert?: boolean): number;
   fill(value: any, offset?: number, end?: number): this;
   indexOf(value: string | number | Buffer, byteOffset?: number, encoding?: string): number;
+  entries(): IterableIterator<[number, number]>;
+  keys(): IterableIterator<number>;
+  values(): IterableIterator<number>;
 }
 
 /************************************************
@@ -433,10 +443,10 @@ declare namespace NodeJS {
   export interface ReadableStream extends EventEmitter {
     readable: boolean;
     read(size?: number): string | Buffer;
-    setEncoding(encoding: string): void;
-    pause(): void;
+    setEncoding(encoding: string): this;
     isPaused(): boolean;
-    resume(): void;
+    pause(): this;
+    resume(): this;
     pipe<T extends WritableStream>(destination: T, options?: { end?: boolean; }): T;
     unpipe<T extends WritableStream>(destination?: T): void;
     unshift(chunk: string): void;
@@ -446,6 +456,7 @@ declare namespace NodeJS {
 
   export interface WritableStream extends EventEmitter {
     writable: boolean;
+    setDefaultEncoding(encoding: string): this;
     write(buffer: Buffer | string, cb?: Function): boolean;
     write(str: string, encoding?: string, cb?: Function): boolean;
     end(): void;
@@ -484,6 +495,17 @@ declare namespace NodeJS {
     [key: string]: string;
   }
 
+  export interface Versions {
+    http_parser: string;
+    node: string;
+    v8: string;
+    ares: string;
+    uv: string;
+    zlib: string;
+    modules: string;
+    openssl: string;
+  }
+
   export interface Process extends EventEmitter {
     stdout: WritableStream;
     stderr: WritableStream;
@@ -507,16 +529,7 @@ declare namespace NodeJS {
     setuid(id: number): void;
     setuid(id: string): void;
     version: string;
-    versions: {
-      http_parser: string;
-      node: string;
-      v8: string;
-      ares: string;
-      uv: string;
-      zlib: string;
-      modules: string;
-      openssl: string;
-    };
+    versions: Versions;
     config: {
       target_defaults: {
         cflags: any[];
@@ -601,7 +614,7 @@ declare namespace NodeJS {
     Uint8ClampedArray: Function;
     WeakMap: WeakMapConstructor;
     WeakSet: WeakSetConstructor;
-    clearImmediate: (immediateId: any) => void;
+    clearImmediate: (immediateId: NodeJS.Immediate) => void;
     clearInterval: (intervalId: NodeJS.Timer) => void;
     clearTimeout: (timeoutId: NodeJS.Timer) => void;
     console: typeof console;
@@ -618,7 +631,7 @@ declare namespace NodeJS {
     parseInt: typeof parseInt;
     process: Process;
     root: Global;
-    setImmediate: (callback: (...args: any[]) => void, ...args: any[]) => any;
+    setImmediate: (callback: (...args: any[]) => void, ...args: any[]) => NodeJS.Immediate;
     setInterval: (callback: (...args: any[]) => void, ms: number, ...args: any[]) => NodeJS.Timer;
     setTimeout: (callback: (...args: any[]) => void, ms: number, ...args: any[]) => NodeJS.Timer;
     undefined: typeof undefined;
@@ -630,6 +643,15 @@ declare namespace NodeJS {
   export interface Timer {
     ref(): void;
     unref(): void;
+    _called: boolean;
+    _onTimeout: Function;
+    _timerArgs?: any[];
+  }
+
+  export interface Immediate {
+    _argv?: any[];
+    _callback: Function;
+    _onImmediate: Function;
   }
 }
 
@@ -729,6 +751,12 @@ declare module "http" {
   }
 
   export class ServerResponse extends stream.Writable {
+    finished: boolean;
+    headersSent: boolean;
+    statusCode: number;
+    statusMessage: string;
+    sendDate: boolean;
+
     // Extended base methods
     write(buffer: Buffer): boolean;
     write(buffer: Buffer, cb?: Function): boolean;
@@ -739,12 +767,8 @@ declare module "http" {
     writeContinue(): void;
     writeHead(statusCode: number, statusText?: string, headers?: OutgoingHeaders): void;
     writeHead(statusCode: number, headers?: OutgoingHeaders): void;
-    statusCode: number;
-    statusMessage: string;
-    headersSent: boolean;
     setHeader(name: string, value: string | string[]): void;
     setTimeout(msecs: number, callback: () => void): this;
-    sendDate: boolean;
     getHeader(name: string): string;
     removeHeader(name: string): void;
     write(chunk: any, encoding?: string): any;
@@ -793,6 +817,7 @@ declare module "http" {
     trailers: IncomingHeaders;
     rawTrailers: string[];
     setTimeout(msecs: number, callback: Function): NodeJS.Timer;
+    destroy(error?: Error): void;
     /**
      * Only valid for request obtained from http.Server.
      */
@@ -882,7 +907,7 @@ declare module "cluster" {
     id: string;
     process: child.ChildProcess;
     suicide: boolean;
-    send(message: any, sendHandle?: any): void;
+    send(message: any, sendHandle?: any): boolean;
     kill(signal?: string): void;
     destroy(signal?: string): void;
     disconnect(): void;
@@ -921,6 +946,7 @@ declare module "cluster" {
 
 declare module "zlib" {
   import * as stream from "stream";
+
   export interface ZlibOptions { chunkSize?: number; windowBits?: number; level?: number; memLevel?: number; strategy?: number; dictionary?: any; }
   export interface ZlibCallback { (error: Error, result: any): void }
 
@@ -1066,6 +1092,42 @@ declare module "https" {
   }
 
   export interface AgentOptions extends http.AgentOptions {
+    /**
+     * Certificate, Private key and CA certificates to use for SSL. Default `null`.
+     */
+    pfx?: string | Buffer;
+    /**
+     * Private key to use for SSL. Default `null`.
+     */
+    key?: string | Buffer | string[] | Buffer[];
+    /**
+     * A string of passphrase for the private key or pfx. Default `null`.
+     */
+    passphrase?: string;
+    /**
+     * Public x509 certificate to use. Default `null`.
+     */
+    cert?: string | Buffer | string[] | Buffer[];
+    /**
+     * A string, `Buffer`, array of strings, or array of `Buffer`s of trusted certificates in PEM format. If this is omitted several well known "root" CAs (like VeriSign) will be used. These are used to authorize connections.
+     */
+    ca?: string | Buffer | string[] | Buffer[];
+    /**
+     * A string describing the ciphers to use or exclude. Consult https://www.openssl.org/docs/apps/ciphers.html#CIPHER-LIST-FORMAT for details on the format.
+     */
+    ciphers?: string;
+    /**
+     * If `true`, the server certificate is verified against the list of supplied CAs. An `'error'` event is emitted if verification fails. Verification happens at the connection level, before the HTTP request is sent. Default `true`.
+     */
+    rejectUnauthorized?: boolean;
+    /**
+     * Servername for SNI (Server Name Indication) TLS extension.
+     */
+    servername?: string;
+    /**
+     * The SSL method to use, e.g. `SSLv3_method` to force SSL version 3. The possible values depend on your installation of OpenSSL and are defined in the constant SSL_METHODS.
+     */
+    secureProtocol?: string;
     maxCachedSessions?: number;
   }
 
@@ -1107,6 +1169,7 @@ declare module "repl" {
     useGlobal?: boolean;
     ignoreUndefined?: boolean;
     writer?: Function;
+    replMode?: symbol;
   }
 
   export function start(options: ReplOptions): REPLServer;
@@ -1232,7 +1295,7 @@ declare module "child_process" {
     stdio: [stream.Writable, stream.Readable, stream.Readable];
     pid: number;
     kill(signal?: string): void;
-    send(message: any, sendHandle?: any): void;
+    send(message: any, sendHandle?: any): boolean;
     connected: boolean;
     disconnect(): void;
     unref(): void;
@@ -1415,11 +1478,8 @@ declare module "net" {
     connect(port: number, host?: string, connectionListener?: Function): void;
     connect(path: string, connectionListener?: Function): void;
     bufferSize: number;
-    setEncoding(encoding?: string): void;
     write(data: any, encoding?: string, callback?: Function): void;
     destroy(): void;
-    pause(): void;
-    resume(): void;
     setTimeout(timeout: number, callback?: Function): void;
     setNoDelay(noDelay?: boolean): void;
     setKeepAlive(enable?: boolean, initialDelay?: number): void;
@@ -2871,6 +2931,7 @@ declare module "stream" {
     highWaterMark?: number;
     encoding?: string;
     objectMode?: boolean;
+    read?: (size?: number) => any;
   }
 
   export class Readable extends events.EventEmitter implements NodeJS.ReadableStream {
@@ -2878,10 +2939,10 @@ declare module "stream" {
     constructor(opts?: ReadableOptions);
     _read(size: number): void;
     read(size?: number): any;
-    setEncoding(encoding: string): void;
-    pause(): void;
     isPaused(): boolean;
-    resume(): void;
+    setEncoding(encoding: string): this;
+    pause(): this;
+    resume(): this;
     pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
     unpipe<T extends NodeJS.WritableStream>(destination?: T): void;
     unshift(chunk: any): void;
@@ -2893,11 +2954,14 @@ declare module "stream" {
     highWaterMark?: number;
     decodeStrings?: boolean;
     objectMode?: boolean;
+    write?: (chunk: string | Buffer, encoding: string, callback: Function) => any;
+    writev?: (chunks: { chunk: string | Buffer, encoding: string }[], callback: Function) => any;
   }
 
   export class Writable extends events.EventEmitter implements NodeJS.WritableStream {
     writable: boolean;
     constructor(opts?: WritableOptions);
+    setDefaultEncoding(encoding: string): this;
     _write(chunk: any, encoding: string, callback: Function): void;
     write(chunk: any, cb?: Function): boolean;
     write(chunk: any, encoding?: string, cb?: Function): boolean;
@@ -2908,12 +2972,15 @@ declare module "stream" {
 
   export interface DuplexOptions extends ReadableOptions, WritableOptions {
     allowHalfOpen?: boolean;
+    readableObjectMode?: boolean;
+    writableObjectMode?: boolean;
   }
 
   // Note: Duplex extends both Readable and Writable.
   export class Duplex extends Readable implements NodeJS.ReadWriteStream {
     writable: boolean;
     constructor(opts?: DuplexOptions);
+    setDefaultEncoding(encoding: string): this;
     _write(chunk: any, encoding: string, callback: Function): void;
     write(chunk: any, cb?: Function): boolean;
     write(chunk: any, encoding?: string, cb?: Function): boolean;
@@ -2922,7 +2989,10 @@ declare module "stream" {
     end(chunk: any, encoding?: string, cb?: Function): void;
   }
 
-  export interface TransformOptions extends ReadableOptions, WritableOptions { }
+  export interface TransformOptions extends ReadableOptions, WritableOptions {
+    write?: (chunk: string | Buffer, encoding: string, callback: Function) => any;
+    writev?: (chunks: { chunk: string | Buffer, encoding: string }[], callback: Function) => any;
+  }
 
   // Note: Transform lacks the _read and _write methods of Readable/Writable.
   export class Transform extends events.EventEmitter implements NodeJS.ReadWriteStream {
@@ -2932,10 +3002,11 @@ declare module "stream" {
     _transform(chunk: any, encoding: string, callback: Function): void;
     _flush(callback: Function): void;
     read(size?: number): any;
-    setEncoding(encoding: string): void;
-    pause(): void;
     isPaused(): boolean;
-    resume(): void;
+    setDefaultEncoding(encoding: string): this;
+    setEncoding(encoding: string): this;
+    pause(): this;
+    resume(): this;
     pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
     unpipe<T extends NodeJS.WritableStream>(destination?: T): void;
     unshift(chunk: any): void;
@@ -2952,27 +3023,225 @@ declare module "stream" {
 }
 
 declare module "util" {
+  /**
+   * The `util.debuglog()` method is used to create a function that conditionally writes debug messages to `stderr` based on the existence of the `NODE_DEBUG` environment variable. If the `section` name appears within the value of that environment variable, then the returned function operates similar to console.error(). If not, then the returned function is a no-op.
+   */
+  export function debuglog(section: string): (msg: any, ...args: any[]) => void;
+
   export interface InspectOptions {
+    /**
+     * If `true`, the `object`'s non-enumerable symbols and properties will be included in the formatted result. Defaults to `false`.
+     */
     showHidden?: boolean;
+    /**
+     * Specifies the number of times to recurse while formatting the `object`. This is useful for inspecting large complicated objects. Defaults to `2`. To make it recurse indefinitely pass `null`.
+     */
     depth?: number | null;
+    /**
+     * If `true`, the output will be styled with ANSI color codes. Defaults to `false`. Colors are customizable, see "Customizing util.inspect colors".
+     */
     colors?: boolean;
+    /**
+     * If `false`, then custom `inspect(depth, opts)` functions exported on the object being inspected will not be called. Defaults to `true`.
+     */
     customInspect?: boolean;
   }
 
-  export function format(format: any, ...param: any[]): string;
-  export function debug(string: string): void;
-  export function error(...param: any[]): void;
-  export function puts(...param: any[]): void;
-  export function print(...param: any[]): void;
-  export function log(string: string): void;
+  /**
+   * The `util.inspect()` method returns a string representation of object that is primarily useful for debugging.
+   */
   export function inspect(object: any, showHidden?: boolean, depth?: number | null, color?: boolean): string;
   export function inspect(object: any, options: InspectOptions): string;
-  export function isArray(object: any): boolean;
-  export function isRegExp(object: any): boolean;
-  export function isDate(object: any): boolean;
-  export function isError(object: any): boolean;
+
+  export namespace inspect {
+    export var colors: {
+      bold: [number, number];
+      italic: [number, number];
+      underline: [number, number];
+      inverse: [number, number];
+      white: [number, number];
+      grey: [number, number];
+      black: [number, number];
+      blue: [number, number];
+      cyan: [number, number];
+      green: [number, number];
+      magenta: [number, number];
+      red: [number, number];
+      yellow: [number, number];
+    }
+
+    export var styles: {
+      special: string;
+      number: string;
+      boolean: string;
+      undefined: string;
+      null: string;
+      string: string;
+      symbol: string;
+      date: string;
+      regexp: string;
+    };
+  }
+
+  /**
+   * The `util.deprecate()` method wraps the given function or class in such a way that it is marked as deprecated.
+   */
+  export function deprecate<T>(fn: T, string: string): T;
+
+  /**
+   * The `util.format()` method returns a formatted string using the first argument as a printf-like format.
+   */
+  export function format(format: any, ...param: any[]): string;
+
+  /**
+   * Inherit the prototype methods from one constructor into another. The prototype of constructor will be set to a new object created from superConstructor.
+   */
   export function inherits(constructor: any, superConstructor: any): void;
-  export function debuglog(key: string): (msg: string, ...param: any[]) => void;
+
+  /**
+   * Deprecated predecessor of `console.error`.
+   *
+   * @deprecated
+   */
+  export function debug(string: string): void;
+
+  /**
+   * Deprecated predecessor of `console.error`.
+   *
+   * @deprecated
+   */
+  export function error(...strings: string[]): void;
+
+  /**
+   * Internal alias for `Array.isArray`.
+   *
+   * @deprecated
+   */
+  export function isArray(object: any): object is any[];
+
+  /**
+   * Returns `true` if the given `object` is a `Boolean`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isBoolean(object: any): object is boolean;
+
+  /**
+   * Returns `true` if the given `object` is a `Buffer`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isBuffer(object: any): object is Buffer;
+
+  /**
+   * Returns `true` if the given `object` is a `Date`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isDate(object: any): object is Date;
+
+  /**
+   * Returns `true` if the given `object` is an `Error`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isError(object: any): object is Error;
+
+  /**
+   * Returns `true` if the given `object` is a `Function`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isFunction(object: any): object is Function;
+
+  /**
+   * Returns `true` if the given `object` is strictly `null`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isNull(object: any): object is null;
+
+  /**
+   * Returns `true` if the given `object` is `null` or `undefined`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isNullOrUndefined(object: any): object is null | undefined;
+
+  /**
+   * Returns `true` if the given `object` is a `Number`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isNumber(object: any): object is number;
+
+  /**
+   * Returns true if the given `object` is strictly an `Object` and not a `Function`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isObject(object: any): object is Object;
+
+  /**
+   * Returns true if the given `object` is a primitive type. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isPrimitive(object: any): object is string | number | boolean | null | undefined;
+
+  /**
+   * Returns true if the given `object` is a `RegExp`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isRegExp(object: any): object is RegExp;
+
+  /**
+   * Returns true if the given `object` is a `String`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isString(object: any): object is string;
+
+  /**
+   * Returns true if the given `object` is a `Symbol`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isSymbol(object: any): object is symbol;
+
+  /**
+   * Returns true if the given `object` is `undefined`. Otherwise, returns `false`.
+   *
+   * @deprecated
+   */
+  export function isUndefined(object: any): object is symbol;
+
+  /**
+   * The `util.log()` method prints the given `string` to `stdout` with an included timestamp.
+   */
+  export function log(string: string): void;
+
+  /**
+   * Deprecated predecessor of `console.log`.
+   *
+   * @deprecated
+   */
+  export function print(strings: string[]): void;
+
+  /**
+   * Deprecated predecessor of `console.log`.
+   *
+   * @deprecated
+   */
+  export function puts(strings: string[]): void;
+
+  /**
+   * The `util._extend()` method was never intended to be used outside of internal Node.js modules. The community found and used it anyway.
+   *
+   * It is deprecated and should not be used in new code. JavaScript comes with very similar built-in functionality through `Object.assign()`.
+   */
+  export function _extend<T, U>(target: T, source: U): T & U;
 }
 
 declare module "assert" {
@@ -3048,6 +3317,9 @@ declare module "domain" {
     bind(cb: (err: Error, data: any) => any): any;
     intercept(cb: (data: any) => any): any;
     dispose(): void;
+    members: any[];
+    enter(): void;
+    exit(): void;
   }
 
   export function create(): Domain;
@@ -3279,4 +3551,17 @@ declare module "constants" {
 
 declare module "module" {
   export = NodeModule;
+}
+
+declare module "process" {
+  export = process;
+}
+
+declare module "timers" {
+  export function setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): NodeJS.Timer;
+  export function setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]): NodeJS.Timer;
+  export function setImmediate(callback: (...args: any[]) => void, ...args: any[]): NodeJS.Immediate;
+  export function clearTimeout(timeoutId: NodeJS.Timer): void;
+  export function clearInterval(intervalId: NodeJS.Timer): void;
+  export function clearImmediate(immediateId: NodeJS.Immediate): void;
 }

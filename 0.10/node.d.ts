@@ -274,6 +274,17 @@ declare namespace NodeJS {
     [key: string]: string;
   }
 
+  export interface Versions {
+    http_parser: string;
+    node: string;
+    v8: string;
+    ares: string;
+    uv: string;
+    zlib: string;
+    modules: string;
+    openssl: string;
+  }
+
   export interface Process extends EventEmitter {
     stdout: WritableStream;
     stderr: WritableStream;
@@ -296,16 +307,7 @@ declare namespace NodeJS {
     setuid(id: number): void;
     setuid(id: string): void;
     version: string;
-    versions: {
-      http_parser: string;
-      node: string;
-      v8: string;
-      ares: string;
-      uv: string;
-      zlib: string;
-      modules: string;
-      openssl: string;
-    };
+    versions: Versions;
     config: {
       target_defaults: {
         cflags: any[];
@@ -350,6 +352,15 @@ declare namespace NodeJS {
   export interface Timer {
     ref(): void;
     unref(): void;
+    _called: boolean;
+    _onTimeout: Function;
+    _timerArgs?: any[];
+  }
+
+  export interface Immediate {
+    _argv?: any[];
+    _callback: Function;
+    _onImmediate: Function;
   }
 }
 
@@ -428,6 +439,7 @@ declare module "http" {
     trailers: IncomingHeaders;
     rawTrailers: string[];
     setTimeout(msecs: number, callback: Function): NodeJS.Timer;
+    destroy(error?: Error): void;
     /**
      * Only valid for request obtained from http.Server.
      */
@@ -448,6 +460,11 @@ declare module "http" {
   }
 
   export class ServerResponse extends stream.Writable {
+    finished: boolean;
+    headersSent: boolean;
+    statusCode: number;
+    sendDate: boolean;
+
     // Extended base methods
     write(buffer: Buffer): boolean;
     write(buffer: Buffer, cb?: Function): boolean;
@@ -458,10 +475,8 @@ declare module "http" {
     writeContinue(): void;
     writeHead(statusCode: number, statusText?: string, headers?: OutgoingHeaders): void;
     writeHead(statusCode: number, headers?: OutgoingHeaders): void;
-    statusCode: number;
     setHeader(name: string, value: string): void;
     setTimeout(msecs: number, callback: () => void): this;
-    sendDate: boolean;
     getHeader(name: string): string;
     removeHeader(name: string): void;
     write(chunk: any, encoding?: string): any;
@@ -594,7 +609,7 @@ declare module "cluster" {
     id: string;
     process: child.ChildProcess;
     suicide: boolean;
-    send(message: any, sendHandle?: any): void;
+    send(message: any, sendHandle?: any): boolean;
     kill(signal?: string): void;
     destroy(signal?: string): void;
     disconnect(): void;
@@ -730,6 +745,42 @@ declare module "https" {
   }
 
   export interface AgentOptions extends http.AgentOptions {
+    /**
+     * Certificate, Private key and CA certificates to use for SSL. Default `null`.
+     */
+    pfx?: string | Buffer;
+    /**
+     * Private key to use for SSL. Default `null`.
+     */
+    key?: string | Buffer | string[] | Buffer[];
+    /**
+     * A string of passphrase for the private key or pfx. Default `null`.
+     */
+    passphrase?: string;
+    /**
+     * Public x509 certificate to use. Default `null`.
+     */
+    cert?: string | Buffer | string[] | Buffer[];
+    /**
+     * A string, `Buffer`, array of strings, or array of `Buffer`s of trusted certificates in PEM format. If this is omitted several well known "root" CAs (like VeriSign) will be used. These are used to authorize connections.
+     */
+    ca?: string | Buffer | string[] | Buffer[];
+    /**
+     * A string describing the ciphers to use or exclude. Consult https://www.openssl.org/docs/apps/ciphers.html#CIPHER-LIST-FORMAT for details on the format.
+     */
+    ciphers?: string;
+    /**
+     * If `true`, the server certificate is verified against the list of supplied CAs. An `'error'` event is emitted if verification fails. Verification happens at the connection level, before the HTTP request is sent. Default `true`.
+     */
+    rejectUnauthorized?: boolean;
+    /**
+     * Servername for SNI (Server Name Indication) TLS extension.
+     */
+    servername?: string;
+    /**
+     * The SSL method to use, e.g. `SSLv3_method` to force SSL version 3. The possible values depend on your installation of OpenSSL and are defined in the constant SSL_METHODS.
+     */
+    secureProtocol?: string;
     maxCachedSessions?: number;
   }
 
@@ -862,7 +913,7 @@ declare module "child_process" {
     stdio: [stream.Writable, stream.Readable, stream.Readable];
     pid: number;
     kill(signal?: string): void;
-    send(message: any, sendHandle?: any): void;
+    send(message: any, sendHandle?: any): boolean;
     connected: boolean;
     disconnect(): void;
     unref(): void;
@@ -2127,25 +2178,121 @@ declare module "stream" {
 
 declare module "util" {
   export interface InspectOptions {
+    /**
+     * If `true`, the `object`'s non-enumerable symbols and properties will be included in the formatted result. Defaults to `false`.
+     */
     showHidden?: boolean;
+    /**
+     * Specifies the number of times to recurse while formatting the `object`. This is useful for inspecting large complicated objects. Defaults to `2`. To make it recurse indefinitely pass `null`.
+     */
     depth?: number | null;
+    /**
+     * If `true`, the output will be styled with ANSI color codes. Defaults to `false`. Colors are customizable, see "Customizing util.inspect colors".
+     */
     colors?: boolean;
+    /**
+     * If `false`, then custom `inspect(depth, opts)` functions exported on the object being inspected will not be called. Defaults to `true`.
+     */
     customInspect?: boolean;
   }
 
-  export function format(format: any, ...param: any[]): string;
-  export function debug(string: string): void;
-  export function error(...param: any[]): void;
-  export function puts(...param: any[]): void;
-  export function print(...param: any[]): void;
-  export function log(string: string): void;
+  /**
+   * The `util.inspect()` method returns a string representation of object that is primarily useful for debugging.
+   */
   export function inspect(object: any, showHidden?: boolean, depth?: number | null, color?: boolean): string;
   export function inspect(object: any, options: InspectOptions): string;
-  export function isArray(object: any): boolean;
-  export function isRegExp(object: any): boolean;
-  export function isDate(object: any): boolean;
-  export function isError(object: any): boolean;
+
+  export namespace inspect {
+    export var colors: {
+      bold: [number, number];
+      italic: [number, number];
+      underline: [number, number];
+      inverse: [number, number];
+      white: [number, number];
+      grey: [number, number];
+      black: [number, number];
+      blue: [number, number];
+      cyan: [number, number];
+      green: [number, number];
+      magenta: [number, number];
+      red: [number, number];
+      yellow: [number, number];
+    }
+
+    export var styles: {
+      special: string;
+      number: string;
+      boolean: string;
+      undefined: string;
+      null: string;
+      string: string;
+      symbol: string;
+      date: string;
+      regexp: string;
+    };
+  }
+
+  /**
+   * The `util.format()` method returns a formatted string using the first argument as a printf-like format.
+   */
+  export function format(format: any, ...param: any[]): string;
+
+  /**
+   * Inherit the prototype methods from one constructor into another. The prototype of constructor will be set to a new object created from superConstructor.
+   */
   export function inherits(constructor: any, superConstructor: any): void;
+
+  /**
+   * Predecessor of `console.error`.
+   */
+  export function debug(string: string): void;
+
+  /**
+   * Predecessor of `console.error`.
+   */
+  export function error(...strings: string[]): void;
+
+  /**
+   * Internal alias for `Array.isArray`.
+   */
+  export function isArray(object: any): object is any[];
+
+  /**
+   * Returns `true` if the given `object` is a `Date`. Otherwise, returns `false`.
+   */
+  export function isDate(object: any): object is Date;
+
+  /**
+   * Returns `true` if the given `object` is an `Error`. Otherwise, returns `false`.
+   */
+  export function isError(object: any): object is Error;
+
+  /**
+   * Returns true if the given `object` is a `RegExp`. Otherwise, returns `false`.
+   */
+  export function isRegExp(object: any): object is RegExp;
+
+  /**
+   * The `util.log()` method prints the given `string` to `stdout` with an included timestamp.
+   */
+  export function log(string: string): void;
+
+  /**
+   * Predecessor of `console.log`.
+   */
+  export function print(strings: string[]): void;
+
+  /**
+   * Predecessor of `console.log`.
+   */
+  export function puts(strings: string[]): void;
+
+  /**
+   * The `util._extend()` method was never intended to be used outside of internal Node.js modules. The community found and used it anyway.
+   *
+   * It is deprecated and should not be used in new code. JavaScript comes with very similar built-in functionality through `Object.assign()`.
+   */
+  export function _extend<T, U>(target: T, source: U): T & U;
 }
 
 declare module "assert" {
@@ -2217,6 +2364,9 @@ declare module "domain" {
     bind(cb: (err: Error, data: any) => any): any;
     intercept(cb: (data: any) => any): any;
     dispose(): void;
+    members: any[];
+    enter(): void;
+    exit(): void;
   }
 
   export function create(): Domain;
@@ -2224,4 +2374,17 @@ declare module "domain" {
 
 declare module "module" {
   export = NodeModule;
+}
+
+declare module "process" {
+  export = process;
+}
+
+declare module "timers" {
+  export function setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): NodeJS.Timer;
+  export function setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]): NodeJS.Timer;
+  export function setImmediate(callback: (...args: any[]) => void, ...args: any[]): NodeJS.Immediate;
+  export function clearTimeout(timeoutId: NodeJS.Timer): void;
+  export function clearInterval(intervalId: NodeJS.Timer): void;
+  export function clearImmediate(immediateId: NodeJS.Immediate): void;
 }

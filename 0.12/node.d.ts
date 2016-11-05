@@ -1262,6 +1262,31 @@ declare module "dns" {
   export function resolveNs(domain: string, callback: (err: Error, addresses: string[]) => void): string[];
   export function resolveCname(domain: string, callback: (err: Error, addresses: string[]) => void): string[];
   export function reverse(ip: string, callback: (err: Error, domains: string[]) => void): string[];
+
+  export const NODATA: 'ENODATA';
+  export const FORMERR: 'EFORMERR';
+  export const SERVFAIL: 'ESERVFAIL';
+  export const NOTFOUND: 'ENOTFOUND';
+  export const NOTIMP: 'ENOTIMP';
+  export const REFUSED: 'EREFUSED';
+  export const BADQUERY: 'EBADQUERY';
+  export const BADNAME: 'EBADNAME';
+  export const BADFAMILY: 'EBADFAMILY';
+  export const BADRESP: 'EBADRESP';
+  export const CONNREFUSED: 'ECONNREFUSED';
+  export const TIMEOUT: 'ETIMEOUT';
+  export const EOF: 'EOF';
+  export const FILE: 'EFILE';
+  export const NOMEM: 'ENOMEM';
+  export const DESTRUCTION: 'EDESTRUCTION';
+  export const BADSTR: 'EBADSTR';
+  export const BADFLAGS: 'EBADFLAGS';
+  export const NONAME: 'ENONAME';
+  export const BADHINTS: 'EBADHINTS';
+  export const NOTINITIALIZED: 'ENOTINITIALIZED';
+  export const LOADIPHLPAPI: 'ELOADIPHLPAPI';
+  export const ADDRGETNETWORKPARAMS: 'EADDRGETNETWORKPARAMS';
+  export const CANCELLED: 'ECANCELLED';
 }
 
 declare module "net" {
@@ -1331,30 +1356,46 @@ declare module "net" {
 declare module "dgram" {
   import * as events from "events";
 
-  interface RemoteInfo {
+  export interface RemoteInfo {
     address: string;
     port: number;
     size: number;
   }
 
-  interface AddressInfo {
+  export interface AddressInfo {
     address: string;
     family: string;
     port: number;
   }
 
-  export function createSocket(type: string, callback?: (msg: Buffer, rinfo: RemoteInfo) => void): Socket;
+  export interface BindOptions {
+    port: number;
+    address?: string;
+    exclusive?: boolean;
+  }
 
-  interface Socket extends events.EventEmitter {
-    send(buf: Buffer, offset: number, length: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+  export interface SocketOptions {
+    type: string;
+    reuseAddr?: boolean;
+  }
+
+  export function createSocket(type: string | SocketOptions, callback?: (msg: Buffer, rinfo: RemoteInfo) => void): Socket;
+
+  export class Socket extends events.EventEmitter {
+    send(msg: Buffer | string | Array<Buffer | string>, offset: number, length: number, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
+    send(msg: Buffer | string | Array<Buffer | string>, port: number, address: string, callback?: (error: Error, bytes: number) => void): void;
     bind(port: number, address?: string, callback?: () => void): void;
-    close(): void;
+    bind(options: BindOptions, callback?: () => void): void;
+    close(callback?: () => void): void;
+    setTTL(ttl: number): void;
     address(): AddressInfo;
     setBroadcast(flag: boolean): void;
     setMulticastTTL(ttl: number): void;
     setMulticastLoopback(flag: boolean): void;
     addMembership(multicastAddress: string, multicastInterface?: string): void;
     dropMembership(multicastAddress: string, multicastInterface?: string): void;
+    ref(): void;
+    unref(): void;
   }
 }
 

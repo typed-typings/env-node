@@ -327,7 +327,7 @@ var ctx: tls.SecureContext = tls.createSecureContext({
 });
 var blah = ctx.context;
 
-var tlsOpts: tls.TlsOptions = {
+var tlsOpts: tls.ConnectOptions = {
   host: "127.0.0.1",
   port: 55
 };

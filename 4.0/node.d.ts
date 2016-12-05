@@ -2971,7 +2971,7 @@ declare module "stream" {
     highWaterMark?: number;
     encoding?: string;
     objectMode?: boolean;
-    read?: (size?: number) => any;
+    read?: (this: Readable, size?: number) => any;
   }
 
   export class Readable extends events.EventEmitter implements NodeJS.ReadableStream {

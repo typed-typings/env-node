@@ -1795,12 +1795,12 @@ declare module "fs" {
    * Asynchronously append data to a file, creating the file if it does not yet exist. `data` can be a string or a buffer.
    */
   export function appendFile(file: string | Buffer | number, data: string | Buffer, callback: (err: NodeJS.ErrnoException | null) => void): void;
-  export function appendFile(file: string | Buffer | number, data: string | Buffer, options: buffer.Encoding | AppendFileOptions, callback: (err: NodeJS.ErrnoException | null) => void): void;
+  export function appendFile(file: string | Buffer | number, data: string | Buffer, options: buffer.Encoding | AppendFileOptions | null, callback: (err: NodeJS.ErrnoException | null) => void): void;
 
   /**
    * The synchronous version of `fs.appendFile()`.
    */
-  export function appendFileSync(file: string | Buffer | number, data: string | Buffer, options?: AppendFileOptions): void;
+  export function appendFileSync(file: string | Buffer | number, data: string | Buffer, options?: AppendFileOptions | null): void;
 
   /**
    * Asynchronous chmod(2).
@@ -1847,7 +1847,7 @@ declare module "fs" {
    *
    * Be aware that, unlike the default value set for `highWaterMark` on a readable stream (16 kb), the stream returned by this method has a default value of 64 kb for the same parameter.
    */
-  export function createReadStream(path: string | Buffer, options?: ReadStreamOptions): ReadStream;
+  export function createReadStream(path: string | Buffer, options?: ReadStreamOptions | null): ReadStream;
 
   export interface WriteStreamOptions {
     flags?: string;
@@ -1862,7 +1862,7 @@ declare module "fs" {
   /**
    * Returns a new WriteStream object.
    */
-  export function createWriteStream(path: string | Buffer, options?: WriteStreamOptions): WriteStream;
+  export function createWriteStream(path: string | Buffer, options?: WriteStreamOptions | null): WriteStream;
 
   /**
    * Test whether or not the given path exists by checking with the file system. Then call the `callback` argument with either true or false.
@@ -2023,12 +2023,12 @@ declare module "fs" {
    * The created folder path is passed as a string to the callback's second parameter.
    */
   export function mkdtemp(prefix: string, callback: (err: NodeJS.ErrnoException | null, dir: string) => void): void;
-  export function mkdtemp(prefix: string, options: buffer.Encoding | MkdtempOptions, callback: (err: NodeJS.ErrnoException | null, dir: string) => void): void;
+  export function mkdtemp(prefix: string, options: buffer.Encoding | MkdtempOptions | null, callback: (err: NodeJS.ErrnoException | null, dir: string) => void): void;
 
   /**
    * The synchronous version of fs.mkdtemp(). Returns the created folder path.
    */
-  export function mkdtempSync(prefix: string, options?: buffer.Encoding | MkdtempOptions): string;
+  export function mkdtempSync(prefix: string, options?: buffer.Encoding | MkdtempOptions | null): string;
 
   /**
    * Asynchronous file open. See open(2). `flags` can be:
@@ -2090,14 +2090,14 @@ declare module "fs" {
    */
   export function readdir(path: string | Buffer, callback: (err: NodeJS.ErrnoException | null, files: string[]) => void): void;
   export function readdir(path: string | Buffer, options: 'buffer' | (ReadFileOptions & { encoding: 'buffer' }), callback: (err: NodeJS.ErrnoException | null, files: Buffer[]) => void): void;
-  export function readdir(path: string | Buffer, options: buffer.Encoding | ReaddirOptions, callback: (err: NodeJS.ErrnoException | null, files: string[]) => void): void;
+  export function readdir(path: string | Buffer, options: buffer.Encoding | ReaddirOptions | null, callback: (err: NodeJS.ErrnoException | null, files: string[]) => void): void;
 
   /**
    * Synchronous readdir(3). Returns an array of filenames excluding '.' and '..'.
    */
   export function readdirSync(path: string | Buffer): string[];
   export function readdirSync(path: string | Buffer, options: 'buffer' | (ReaddirOptions & { encoding: 'buffer' })): Buffer[];
-  export function readdirSync(path: string | Buffer, options: buffer.Encoding | ReaddirOptions): string[];
+  export function readdirSync(path: string | Buffer, options: buffer.Encoding | ReaddirOptions | null): string[];
 
   export interface ReadFileOptions {
     encoding?: buffer.Encoding | 'buffer';
@@ -2109,14 +2109,14 @@ declare module "fs" {
    */
   export function readFile(file: string | Buffer | number, callback: (err: NodeJS.ErrnoException | null, data: Buffer) => void): void;
   export function readFile(file: string | Buffer | number, options: buffer.Encoding | (ReadFileOptions & { encoding: buffer.Encoding }), callback: (err: NodeJS.ErrnoException | null, data: string) => void): void;
-  export function readFile(file: string | Buffer | number, options: 'buffer' | ReadFileOptions, callback: (err: NodeJS.ErrnoException | null, data: Buffer) => void): void;
+  export function readFile(file: string | Buffer | number, options: 'buffer' | ReadFileOptions | null, callback: (err: NodeJS.ErrnoException | null, data: Buffer) => void): void;
 
   /**
    * Synchronous version of `fs.readFile`.
    */
   export function readFileSync(file: string | Buffer | number): Buffer;
   export function readFileSync(file: string | Buffer | number, options: buffer.Encoding | (ReadFileOptions & { encoding: buffer.Encoding })): string;
-  export function readFileSync(file: string | Buffer | number, options: 'buffer' | ReadFileOptions): Buffer;
+  export function readFileSync(file: string | Buffer | number, options: 'buffer' | ReadFileOptions | null): Buffer;
 
   export interface ReadlinkOptions {
     encoding?: buffer.Encoding | 'buffer';
@@ -2127,14 +2127,14 @@ declare module "fs" {
    */
   export function readlink(path: string | Buffer, callback: (err: NodeJS.ErrnoException | null, linkString: string) => void): void;
   export function readlink(path: string | Buffer, options: 'buffer' | (ReadlinkOptions & { encoding: 'buffer' }), callback: (err: NodeJS.ErrnoException | null, linkString: Buffer) => void): void;
-  export function readlink(path: string | Buffer, options: buffer.Encoding | ReadlinkOptions, callback: (err: NodeJS.ErrnoException | null, linkString: Buffer) => void): void;
+  export function readlink(path: string | Buffer, options: buffer.Encoding | ReadlinkOptions | null, callback: (err: NodeJS.ErrnoException | null, linkString: Buffer) => void): void;
 
   /**
    * Synchronous readlink(2).
    */
   export function readlinkSync(path: string | Buffer): string;
   export function readlinkSync(path: string | Buffer, options: 'buffer' | (ReadlinkOptions & { encoding: 'buffer' })): Buffer;
-  export function readlinkSync(path: string | Buffer, options: buffer.Encoding | ReadlinkOptions): string;
+  export function readlinkSync(path: string | Buffer, options: buffer.Encoding | ReadlinkOptions | null): string;
 
   /**
    * Synchronous version of `fs.read()`.
@@ -2152,7 +2152,7 @@ declare module "fs" {
    */
   export function realpath(path: string | Buffer, callback: (err: NodeJS.ErrnoException | null, resolvedPath: string) => void): void;
   export function realpath(path: string | Buffer, options: 'buffer' | (RealpathOptions & { encoding: 'buffer' }), callback: (err: NodeJS.ErrnoException | null, resolvedPath: Buffer) => void): void;
-  export function realpath(path: string | Buffer, options: buffer.Encoding | RealpathOptions, callback: (err: NodeJS.ErrnoException | null, resolvedPath: Buffer) => void): void;
+  export function realpath(path: string | Buffer, options: buffer.Encoding | RealpathOptions | null, callback: (err: NodeJS.ErrnoException | null, resolvedPath: Buffer) => void): void;
 
   /**
    * Synchronous realpath(3). Returns the resolved path.
@@ -2161,7 +2161,7 @@ declare module "fs" {
    */
   export function realpathSync(path: string | Buffer): string;
   export function realpathSync(path: string | Buffer, options: 'buffer' | (RealpathOptions & { encoding: 'buffer' })): Buffer;
-  export function realpathSync(path: string | Buffer, options: buffer.Encoding | RealpathOptions): string;
+  export function realpathSync(path: string | Buffer, options: buffer.Encoding | RealpathOptions | null): string;
 
   /**
    * Asynchronous rename(2).
@@ -2276,9 +2276,9 @@ declare module "fs" {
    * Please note the listener callback is attached to the `'change'` event fired by `fs.FSWatcher`, but they are not the same thing.
    */
   export function watch(filename: string | Buffer): FSWatcher;
-  export function watch(filename: string | Buffer, options: buffer.Encoding | WatchOptions): FSWatcher;
+  export function watch(filename: string | Buffer, options: buffer.Encoding | WatchOptions | null): FSWatcher;
   export function watch(filename: string | Buffer, listener: WatchListener): FSWatcher;
-  export function watch(filename: string | Buffer, options: buffer.Encoding | WatchOptions, listener: WatchListener): FSWatcher;
+  export function watch(filename: string | Buffer, options: buffer.Encoding | WatchOptions | null, listener: WatchListener): FSWatcher;
 
   export interface WatchFileOptions {
     /**
@@ -2299,7 +2299,7 @@ declare module "fs" {
    * Note: `fs.watch()` is more efficient than `fs.watchFile` and `fs.unwatchFile`. `fs.watch` should be used instead of `fs.watchFile` and `fs.unwatchFile` when possible.
    */
   export function watchFile(filename: string | Buffer, listener: (curr: Stats, prev: Stats) => void): void;
-  export function watchFile(filename: string | Buffer, options: WatchFileOptions, listener: (curr: Stats, prev: Stats) => void): void;
+  export function watchFile(filename: string | Buffer, options: WatchFileOptions | null, listener: (curr: Stats, prev: Stats) => void): void;
 
   /**
    * Write `buffer` to the file specified by `fd`.
@@ -2332,12 +2332,12 @@ declare module "fs" {
    * Note: If a file descriptor is specified as the `file`, it will not be closed automatically.
    */
   export function writeFile(file: string | Buffer | number, data: string | Buffer, callback: (err: NodeJS.ErrnoException | null) => void): void;
-  export function writeFile(file: string | Buffer | number, data: string | Buffer, options: buffer.Encoding | WriteFileOptions, callback: (err: NodeJS.ErrnoException | null) => void): void;
+  export function writeFile(file: string | Buffer | number, data: string | Buffer, options: buffer.Encoding | WriteFileOptions | null, callback: (err: NodeJS.ErrnoException | null) => void): void;
 
   /**
    * The synchronous version of `fs.writeFile()`.
    */
-  export function writeFileSync(file: string | Buffer | number, data: string | Buffer, options?: buffer.Encoding | WriteFileOptions): void;
+  export function writeFileSync(file: string | Buffer | number, data: string | Buffer, options?: buffer.Encoding | WriteFileOptions | null): void;
 
   /**
    * Synchronous `fs.write`.

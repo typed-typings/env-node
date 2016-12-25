@@ -2772,7 +2772,7 @@ declare module "stream" {
   }
 
   // Note: Duplex extends both Readable and Writable.
-  export class Duplex extends Readable implements NodeJS.ReadWriteStream {
+  export class Duplex extends Readable implements Writable {
     writable: boolean;
     constructor(opts?: DuplexOptions);
     setDefaultEncoding(encoding: string): this;
@@ -2786,29 +2786,9 @@ declare module "stream" {
 
   export interface TransformOptions extends ReadableOptions, WritableOptions { }
 
-  // Note: Transform lacks the _read and _write methods of Readable/Writable.
-  export class Transform extends events.EventEmitter implements NodeJS.ReadWriteStream {
-    readable: boolean;
-    writable: boolean;
+  export class Transform extends Duplex {
     constructor(opts?: TransformOptions);
     _transform(chunk: any, encoding: string, callback: Function): void;
-    _flush(callback: Function): void;
-    read(size?: number): any;
-    setDefaultEncoding(encoding: string): this;
-    setEncoding(encoding: string): this;
-    isPaused(): boolean;
-    pause(): this;
-    resume(): this;
-    pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
-    unpipe<T extends NodeJS.WritableStream>(destination?: T): void;
-    unshift(chunk: any): void;
-    wrap(oldStream: NodeJS.ReadableStream): NodeJS.ReadableStream;
-    push(chunk: any, encoding?: string): boolean;
-    write(chunk: any, cb?: Function): boolean;
-    write(chunk: any, encoding?: string, cb?: Function): boolean;
-    end(): void;
-    end(chunk: any, cb?: Function): void;
-    end(chunk: any, encoding?: string, cb?: Function): void;
   }
 
   export class PassThrough extends Transform { }

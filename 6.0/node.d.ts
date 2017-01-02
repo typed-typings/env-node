@@ -590,7 +590,7 @@ declare namespace NodeJS {
     nextTick(callback: Function): void;
     umask(mask?: number): number;
     uptime(): number;
-    hrtime(time?: number[]): number[];
+    hrtime(time?: [number, number]): [number, number];
     domain: Domain;
 
     // Worker

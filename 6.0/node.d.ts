@@ -789,7 +789,6 @@ declare module "http" {
     getHeader(name: string): string;
     removeHeader(name: string): void;
     addTrailers(headers: OutgoingHeaders): void;
-    setTimeout(msecs: number, callback?: () => void): this;
   }
 
   export class ServerResponse extends OutgoingMessage {

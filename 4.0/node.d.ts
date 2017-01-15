@@ -756,8 +756,8 @@ declare module "http" {
     headersSent: boolean;
 
     setTimeout(msecs: number, callback?: () => void): this;
-    setHeader(name: string, value: string | string[]): void;
-    getHeader(name: string): string | undefined;
+    setHeader(name: string, value: number | string | string[]): void;
+    getHeader(name: string): number | string | string[] | undefined;
     removeHeader(name: string): void;
     addTrailers(headers: OutgoingHeaders): void;
   }

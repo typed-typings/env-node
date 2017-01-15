@@ -622,57 +622,32 @@ declare module "http" {
     maxHeadersCount: number;
   }
 
-  export class ServerResponse extends stream.Writable {
+  export class OutgoingMessage extends stream.Writable {
     finished: boolean;
+    sendDate: boolean;
     headersSent: boolean;
+
+    setTimeout(msecs: number, callback?: () => void): this;
+    setHeader(name: string, value: string): void;
+    getHeader(name: string): string;
+    removeHeader(name: string): void;
+    addTrailers(headers: OutgoingHeaders): void;
+    setTimeout(msecs: number, callback?: () => void): this;
+  }
+
+  export class ServerResponse extends OutgoingMessage {
     statusCode: number;
     statusMessage: string;
-    sendDate: boolean;
-
-    // Extended base methods
-    write(buffer: Buffer): boolean;
-    write(buffer: Buffer, cb?: Function): boolean;
-    write(str: string, cb?: Function): boolean;
-    write(str: string, encoding?: string, cb?: Function): boolean;
-    write(str: string, encoding?: string, fd?: string): boolean;
 
     writeContinue(): void;
     writeHead(statusCode: number, statusText?: string, headers?: OutgoingHeaders): void;
     writeHead(statusCode: number, headers?: OutgoingHeaders): void;
-    setHeader(name: string, value: string): void;
-    setTimeout(msecs: number, callback: () => void): this;
-    getHeader(name: string): string;
-    removeHeader(name: string): void;
-    write(chunk: any, encoding?: string): any;
-    addTrailers(headers: OutgoingHeaders): void;
-
-    // Extended base methods
-    end(): void;
-    end(buffer: Buffer, cb?: Function): void;
-    end(str: string, cb?: Function): void;
-    end(str: string, encoding?: string, cb?: Function): void;
   }
 
-  export class ClientRequest extends stream.Writable {
-    // Extended base methods
-    write(buffer: Buffer): boolean;
-    write(buffer: Buffer, cb?: Function): boolean;
-    write(str: string, cb?: Function): boolean;
-    write(str: string, encoding?: string, cb?: Function): boolean;
-    write(str: string, encoding?: string, fd?: string): boolean;
-
-    write(chunk: any, encoding?: string): void;
+  export class ClientRequest extends OutgoingMessage {
     abort(): void;
-    setTimeout(timeout: number, callback?: Function): void;
     setNoDelay(noDelay?: boolean): void;
     setSocketKeepAlive(enable?: boolean, initialDelay?: number): void;
-
-    // Extended base methods
-    end(): void;
-    end(buffer: Buffer, cb?: Function): void;
-    end(str: string, cb?: Function): void;
-    end(str: string, encoding?: string, cb?: Function): void;
-    end(data?: any, encoding?: string): void;
   }
 
   export class IncomingMessage extends stream.Readable {
@@ -681,7 +656,7 @@ declare module "http" {
     rawHeaders: string[];
     trailers: IncomingHeaders;
     rawTrailers: string[];
-    setTimeout(msecs: number, callback: Function): NodeJS.Timer;
+    setTimeout(msecs: number, callback: () => void): this;
     destroy(error?: Error): void;
     /**
      * Only valid for request obtained from http.Server.

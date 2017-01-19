@@ -773,6 +773,7 @@ declare module "http" {
   }
 
   export class Server extends net.Server {
+    constructor(req: IncomingMessage, res: ServerResponse);
     setTimeout(msecs: number, callback: Function): void;
     maxHeadersCount: number;
     timeout: number;
@@ -784,6 +785,7 @@ declare module "http" {
     sendDate: boolean;
     headersSent: boolean;
 
+    constructor();
     setTimeout(msecs: number, callback?: () => void): this;
     setHeader(name: string, value: number | string | string[]): void;
     getHeader(name: string): number | string | string[] | undefined;
@@ -795,6 +797,7 @@ declare module "http" {
     statusCode: number;
     statusMessage: string;
 
+    constructor(req: IncomingMessage);
     writeContinue(cb?: () => void): void;
     writeHead(statusCode: number, statusText?: string, headers?: OutgoingHeaders): void;
     writeHead(statusCode: number, headers?: OutgoingHeaders): void;
@@ -803,6 +806,7 @@ declare module "http" {
   }
 
   export class ClientRequest extends OutgoingMessage {
+    constructor(options: string | RequestOptions, cb?: (res: IncomingMessage) => void);
     abort(): void;
     setNoDelay(noDelay?: boolean): void;
     setSocketKeepAlive(enable?: boolean, initialDelay?: number): void;
@@ -814,8 +818,6 @@ declare module "http" {
     rawHeaders: string[];
     trailers: IncomingHeaders;
     rawTrailers: string[];
-    setTimeout(msecs: number, callback?: () => void): this;
-    destroy(error?: Error): void;
     /**
      * Only valid for request obtained from http.Server.
      */
@@ -833,6 +835,10 @@ declare module "http" {
      */
     statusMessage?: string;
     socket: net.Socket;
+
+    constructor(socket: net.Socket);
+    setTimeout(msecs: number, callback?: () => void): this;
+    destroy(error?: Error): void;
   }
 
   export interface AgentOptions {
@@ -1507,17 +1513,9 @@ declare module "net" {
   export class Socket extends stream.Duplex {
     constructor(options?: { fd?: string; type?: string; allowHalfOpen?: boolean; });
 
-    // Extended base methods
-    write(buffer: Buffer): boolean;
-    write(buffer: Buffer, cb?: Function): boolean;
-    write(str: string, cb?: Function): boolean;
-    write(str: string, encoding?: string, cb?: Function): boolean;
-    write(str: string, encoding?: string, fd?: string): boolean;
-
     connect(port: number, host?: string, connectionListener?: Function): void;
     connect(path: string, connectionListener?: Function): void;
     bufferSize: number;
-    write(data: any, encoding?: string, callback?: Function): void;
     destroy(): void;
     setTimeout(timeout: number, callback?: Function): void;
     setNoDelay(noDelay?: boolean): void;
@@ -1533,13 +1531,6 @@ declare module "net" {
     localPort: number;
     bytesRead: number;
     bytesWritten: number;
-
-    // Extended base methods
-    end(): void;
-    end(buffer: Buffer, cb?: Function): void;
-    end(str: string, cb?: Function): void;
-    end(str: string, encoding?: string, cb?: Function): void;
-    end(data?: any, encoding?: string): void;
   }
 
   export interface ListenOptions {

@@ -795,9 +795,11 @@ declare module "http" {
     statusCode: number;
     statusMessage: string;
 
-    writeContinue(): void;
+    writeContinue(cb?: () => void): void;
     writeHead(statusCode: number, statusText?: string, headers?: OutgoingHeaders): void;
     writeHead(statusCode: number, headers?: OutgoingHeaders): void;
+    assignSocket(socket: stream.Writable): void;
+    detachSocket(socket: stream.Writable): void;
   }
 
   export class ClientRequest extends OutgoingMessage {

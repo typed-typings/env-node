@@ -474,9 +474,11 @@ declare module "http" {
   export class ServerResponse extends OutgoingMessage {
     statusCode: number;
 
-    writeContinue(): void;
+    writeContinue(cb?: () => void): void;
     writeHead(statusCode: number, statusText?: string, headers?: OutgoingHeaders): void;
     writeHead(statusCode: number, headers?: OutgoingHeaders): void;
+    assignSocket(socket: stream.Writable): void;
+    detachSocket(socket: stream.Writable): void;
   }
 
   /**
